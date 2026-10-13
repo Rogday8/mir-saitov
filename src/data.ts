@@ -1,0 +1,134 @@
+// Всё, что меняется без программиста: работы, услуги, контакты.
+// Картинки и видео работ лежат в public/works/<slug>*.{webp,mp4}.
+
+export interface Work {
+  slug: string;
+  name: string;
+  kind: string; // тип сайта
+  status: string; // «работает» / «концепт»
+  year: string;
+  url: string;
+  /** можно открыть сайт прямо внутри портфолио (если сайт не запрещает встраивание) */
+  embed: boolean;
+  lead: string;
+  features: string[];
+  stack: string[];
+  /** цвета работы: фон сцены, акцент, текст на фоне */
+  bg: string;
+  accent: string;
+  ink: string;
+  /** дополнительный экран (например, Telegram-мини-приложение) */
+  extra?: { src: string; label: string };
+}
+
+export const WORKS: Work[] = [
+  {
+    slug: 'apple-favorite',
+    name: 'Apple Favorite',
+    kind: 'Интернет-магазин техники',
+    status: 'Работает',
+    year: '2026',
+    url: 'https://rogday.ru/',
+    embed: false,
+    lead: 'Полноценный магазин: каталог на сотни моделей, корзина с опциями, заказы в Telegram, своя админ-панель и мини-приложение прямо в Telegram.',
+    features: ['Каталог 650+ товаров', 'Админ-панель', 'Мини-приложение Telegram', 'Заказы в Telegram-бот', 'Trade-in и ремонт', '3D-модели товаров'],
+    stack: ['React', 'Node.js', 'PostgreSQL', 'Telegram Bot API'],
+    bg: '#05060a',
+    accent: '#2f8bff',
+    ink: '#f5f5f7',
+    extra: { src: 'works/apple-favorite-tg.webp', label: 'Мини-приложение в Telegram' },
+  },
+  {
+    slug: 'gerbariy',
+    name: 'Гербарий №7',
+    kind: 'Цветочная мастерская',
+    status: 'Промо-сайт',
+    year: '2026',
+    url: 'https://rogday8.github.io/flow-3/',
+    embed: true,
+    lead: 'Ботанический архив вместо витрины: пергамент, сургуч, латинские названия — и букеты, которые хочется рассматривать, как коллекцию.',
+    features: ['3D-карусель образцов', 'Атлас с лупой', 'Письмо на печатной машинке', 'Альбом с перелистыванием', 'Карта доставки'],
+    stack: ['React', 'Motion', 'Tailwind'],
+    bg: '#efe6d4',
+    accent: '#8a1f2f',
+    ink: '#2b1a14',
+  },
+  {
+    slug: 'pole',
+    name: 'ПОЛЕ',
+    kind: 'Цветочная лавка',
+    status: 'Промо-сайт',
+    year: '2026',
+    url: 'https://rogday8.github.io/flow_2/',
+    embed: true,
+    lead: 'Светлый журнальный стиль: буквы залиты цветами, наклейки можно таскать мышкой, а букет подбирается свайпами, как в приложении знакомств.',
+    features: ['Буквы из фотографий', 'Перетаскиваемые наклейки', 'Свайп-подбор букета', 'Квиз', 'Сезонный круг'],
+    stack: ['React', 'Motion', 'Tailwind'],
+    bg: '#f4eedd',
+    accent: '#e8a400',
+    ink: '#1d3a24',
+  },
+  {
+    slug: 'maison-petale',
+    name: 'Maison Pétale',
+    kind: 'Цветочный дом',
+    status: 'Промо-сайт',
+    year: '2026',
+    url: 'https://rogday8.github.io/flow_1/',
+    embed: true,
+    lead: 'Тёмная элегантность и живые цветы: лепестки летят по экрану, а в конструкторе можно собрать свой букет и сразу увидеть цену.',
+    features: ['Конструктор букета', 'Парящие цветы', 'Кинематографичный скролл', 'Подписка на букеты'],
+    stack: ['React', 'Motion', 'Lenis'],
+    bg: '#1a0b11',
+    accent: '#f3a7bb',
+    ink: '#fbeef1',
+  },
+  {
+    slug: 'zerno',
+    name: 'ЗЕРНО',
+    kind: 'Кофейня',
+    status: 'Промо-сайт',
+    year: '2026',
+    url: 'https://rogday8.github.io/coffeerog/',
+    embed: true,
+    lead: 'Кофейня медленного утра: 3D-чашка вращается за курсором, типографика живёт на скролле, а путь зерна рассказан как история.',
+    features: ['3D-чашка на WebGL', 'Кинетическая типографика', 'Горизонтальная лента', 'Бронирование столика'],
+    stack: ['React', 'Three.js', 'GSAP'],
+    bg: '#20140e',
+    accent: '#d0904f',
+    ink: '#f6ead9',
+  },
+  {
+    slug: 'bubble-tea',
+    name: 'Bubble Tea Love',
+    kind: 'Бар бабл-ти',
+    status: 'Промо-сайт',
+    year: '2026',
+    url: 'https://rogday8.github.io/bubletealove/',
+    embed: true,
+    lead: 'Выбери вкус — и весь сайт перекрашивается под него. Стакан наполняется на глазах, а в конструкторе собирается свой напиток.',
+    features: ['Сайт меняет цвет под вкус', 'Конструктор напитка', 'Анимированный стакан', 'Ритм-скролл'],
+    stack: ['React', 'Motion', 'Tailwind'],
+    bg: '#5c1219',
+    accent: '#ffb3bd',
+    ink: '#fff1f2',
+  },
+];
+
+export const SERVICES = [
+  'Интернет-магазины',
+  'Промо-сайты',
+  '3D и WebGL',
+  'Telegram Mini Apps',
+  'Админ-панели',
+  'Анимации',
+  'Лендинги',
+  'Интеграции',
+];
+
+// Контакты студии: заполните — кнопки в блоке «Контакты» появятся сами.
+export const CONTACTS = {
+  telegram: '', // например 'https://t.me/username'
+  email: '', // например 'hello@example.ru'
+  phone: '', // например '+7 900 000-00-00'
+};
