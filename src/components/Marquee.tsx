@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { motion, useAnimationFrame, useMotionValue, useScroll, useSpring, useTransform, useVelocity, wrap } from 'motion/react';
+import { motion, useAnimationFrame, useInView, useMotionValue, useScroll, useSpring, useTransform, useVelocity, wrap } from 'motion/react';
 import { SERVICES } from '../data';
 
 // Лента, которая едет сама и ускоряется (и разворачивается) от скорости прокрутки
@@ -9,8 +9,11 @@ const Row: React.FC<{ items: string[]; base: number; className?: string }> = ({ 
   const vel = useSpring(useVelocity(scrollY), { damping: 50, stiffness: 400 });
   const factor = useTransform(vel, [-2000, 0, 2000], [-1.6, 0, 1.6], { clamp: true });
   const dir = useRef(1);
+  const box = useRef<HTMLDivElement>(null);
+  const inView = useInView(box); // за экраном лента не крутится
   const tx = useTransform(x, (v) => `${wrap(-50, 0, v)}%`);
   useAnimationFrame((_, delta) => {
+    if (!inView) return;
     let move = dir.current * base * (delta / 1000);
     const f = factor.get();
     if (f < 0) dir.current = -1;
@@ -20,7 +23,7 @@ const Row: React.FC<{ items: string[]; base: number; className?: string }> = ({ 
   });
   const list = [...items, ...items];
   return (
-    <div className={`flex overflow-hidden whitespace-nowrap ${className}`}>
+    <div ref={box} className={`flex overflow-hidden whitespace-nowrap ${className}`}>
       <motion.div className="flex shrink-0 items-center" style={{ x: tx }}>
         {[...list, ...list].map((s, i) => (
           <span key={i} className="flex items-center">

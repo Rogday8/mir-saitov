@@ -69,7 +69,7 @@ const Hero: React.FC<{ ready: boolean }> = ({ ready }) => {
       {/* сияние фона */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_70%_45%,rgba(139,108,255,.22),transparent_70%),radial-gradient(40%_40%_at_20%_80%,rgba(62,230,255,.10),transparent_70%)]" />
 
-      <div className="absolute inset-0 max-lg:top-[-6%]" data-cursor={inside ? (site ? 'Открыть' : 'Крутить') : hoverEarth ? 'Войти' : undefined}>
+      <div className="absolute inset-0 max-lg:top-[-6%]" data-hover={hoverEarth || site ? '' : undefined}>
         {gl ? (
           <Suspense fallback={null}>
             {/* без scale: холст меряет размер родителя с учётом transform и остался бы на 90% ширины */}
@@ -115,37 +115,39 @@ const Hero: React.FC<{ ready: boolean }> = ({ ready }) => {
         {inside && (
           <motion.div
             key="inside"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="absolute inset-x-4 top-24 z-20 flex flex-col items-start gap-3 max-lg:top-auto max-lg:bottom-6 sm:right-auto sm:max-w-sm lg:left-10 lg:top-36"
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ duration: 0.6, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute inset-x-3 bottom-5 z-20 mx-auto flex max-w-2xl items-center gap-3 rounded-full border border-white/15 bg-void/85 py-2 pl-5 pr-2 shadow-2xl sm:bottom-8"
           >
-            <div className="rounded-3xl border border-white/15 bg-void/60 p-5 backdrop-blur-md">
-              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-lime">Вы внутри</div>
-              <div className="mt-1 font-display text-2xl font-semibold">Мира сайтов</div>
-              <p className="mt-2 text-[13px] leading-relaxed text-haze">Эта планета собрана из наших работ. Крутите её, наведите на сайт и нажмите — он откроется вживую.</p>
+            <div className="min-w-0 flex-1">
               <AnimatePresence mode="wait">
-                <motion.div key={site?.slug || 'none'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="mt-3 min-h-[44px]">
+                <motion.div key={site?.slug || 'none'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }}>
                   {site ? (
-                    <>
-                      <div className="font-display text-lg font-semibold" style={{ color: site.accent }}>{site.name}</div>
-                      <div className="text-[12px] text-haze">{site.kind}</div>
-                    </>
+                    <div className="truncate">
+                      <span className="font-display text-[15px] font-semibold sm:text-lg" style={{ color: site.accent }}>
+                        {site.name}
+                      </span>
+                      <span className="ml-2 text-[12px] text-haze">{site.embed ? 'нажмите — откроется вживую' : 'нажмите — покажем подробнее'}</span>
+                    </div>
                   ) : (
-                    <div className="text-[12px] text-haze/70">Наведите на любую плитку</div>
+                    <div className="truncate">
+                      <span className="font-display text-[15px] font-semibold sm:text-lg">Мир сайтов</span>
+                      <span className="ml-2 text-[12px] text-haze">наведите на сайт на орбите Сатурна</span>
+                    </div>
                   )}
                 </motion.div>
               </AnimatePresence>
             </div>
-            <button onClick={() => setInside(false)} className="flex items-center gap-2 rounded-full bg-mist px-5 py-2.5 text-[13px] font-bold text-void">
-              ← Назад к Земле
+            <button onClick={() => setInside(false)} className="shrink-0 rounded-full bg-mist px-4 py-2.5 text-[13px] font-bold text-void sm:px-5">
+              ← К Земле
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className={`pointer-events-none relative z-10 mx-auto flex h-full max-w-[1500px] flex-col justify-end px-5 pb-10 transition-opacity duration-700 sm:px-10 sm:pb-14 ${inside ? 'opacity-20' : ''}`}>
+      <div className={`pointer-events-none relative z-10 mx-auto flex h-full max-w-[1500px] flex-col justify-end px-5 pb-10 transition-all duration-700 sm:px-10 sm:pb-14 ${inside ? 'translate-y-8 opacity-0 [&_*]:!pointer-events-none' : ''}`}>
         <motion.div
           className="mb-auto mt-28 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.3em] text-haze max-lg:invisible"
           initial={{ opacity: 0 }}
@@ -211,7 +213,7 @@ const Hero: React.FC<{ ready: boolean }> = ({ ready }) => {
 
       <motion.button
         onClick={() => scrollToId('works')}
-        className="absolute bottom-6 left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-2 font-mono text-[10px] uppercase tracking-[0.3em] text-haze lg:flex"
+        className={`absolute bottom-6 left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-2 font-mono text-[10px] uppercase tracking-[0.3em] text-haze lg:flex ${inside ? "!hidden" : ""}`}
         initial={{ opacity: 0 }}
         animate={ready ? { opacity: 1 } : {}}
         transition={{ delay: 1.4 }}

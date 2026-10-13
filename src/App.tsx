@@ -57,7 +57,7 @@ const Main: React.FC = () => {
         <Contact />
       </main>
       <Footer />
-      <div className="grain" aria-hidden />
+      <div className="grain hidden sm:block" aria-hidden />
     </>
   );
 };

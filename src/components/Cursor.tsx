@@ -1,73 +1,86 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useSpring } from 'motion/react';
 import { finePointer } from '../lib/smooth';
 
-// Свой курсор: точка + кольцо. Над ссылками кольцо растёт, над элементами с data-cursor="текст" — показывает подпись.
+// Свой курсор: точка + тонкое кольцо. Цвет инвертируется под фоном (mix-blend: difference) — виден и на белом, и на тёмном.
+// Над ссылками кольцо чуть растёт; data-cursor="aim" — прицел для игры. Мышь ушла из окна — курсор гаснет, а не «улетает».
 const Cursor: React.FC = () => {
   const [on, setOn] = useState(false);
-  const [label, setLabel] = useState('');
-  const [hover, setHover] = useState(false);
+  const [mode, setMode] = useState<'base' | 'hover' | 'aim'>('base');
+  const [visible, setVisible] = useState(false);
   const [down, setDown] = useState(false);
   const x = useMotionValue(-100);
   const y = useMotionValue(-100);
-  const rx = useSpring(x, { stiffness: 380, damping: 32, mass: 0.6 });
-  const ry = useSpring(y, { stiffness: 380, damping: 32, mass: 0.6 });
+  const rx = useSpring(x, { stiffness: 500, damping: 36, mass: 0.5 });
+  const ry = useSpring(y, { stiffness: 500, damping: 36, mass: 0.5 });
+  const modeRef = useRef(mode);
+  const visRef = useRef(false);
 
   useEffect(() => {
     if (!finePointer()) return;
     setOn(true);
     document.documentElement.classList.add('has-cursor');
     const move = (e: PointerEvent) => {
-      x.set(e.clientX);
-      y.set(e.clientY);
+      if (!visRef.current) {
+        // вернулись в окно: кольцо сразу на месте, без перелёта через экран
+        x.jump(e.clientX);
+        y.jump(e.clientY);
+        rx.jump(e.clientX);
+        ry.jump(e.clientY);
+        visRef.current = true;
+        setVisible(true);
+      } else {
+        x.set(e.clientX);
+        y.set(e.clientY);
+      }
       const t = e.target as HTMLElement | null;
-      const withLabel = t?.closest<HTMLElement>('[data-cursor]');
-      setLabel(withLabel?.dataset.cursor || '');
-      setHover(!!t?.closest('a,button,[role=button],input,label,[data-hover]'));
+      const next = t?.closest('[data-cursor="aim"]') ? 'aim' : t?.closest('a,button,[role=button],input,textarea,label,[data-hover]') ? 'hover' : 'base';
+      if (next !== modeRef.current) {
+        modeRef.current = next;
+        setMode(next);
+      }
+    };
+    const hide = () => {
+      visRef.current = false;
+      setVisible(false);
     };
     const d = () => setDown(true);
     const u = () => setDown(false);
-    const leave = () => {
-      x.set(-100);
-      y.set(-100);
-    };
     window.addEventListener('pointermove', move, { passive: true });
     window.addEventListener('pointerdown', d);
     window.addEventListener('pointerup', u);
-    document.addEventListener('pointerleave', leave);
+    document.documentElement.addEventListener('pointerleave', hide);
+    window.addEventListener('blur', hide);
     return () => {
       document.documentElement.classList.remove('has-cursor');
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerdown', d);
       window.removeEventListener('pointerup', u);
-      document.removeEventListener('pointerleave', leave);
+      document.documentElement.removeEventListener('pointerleave', hide);
+      window.removeEventListener('blur', hide);
     };
-  }, [x, y]);
+  }, [x, y, rx, ry]);
 
   if (!on) return null;
-  // data-cursor="aim" — тонкий прицел (игра): ничего не закрывает в центре
-  if (label === 'aim')
-    return (
-      <div className="pointer-events-none fixed inset-0 z-[100]" aria-hidden>
-        <motion.svg viewBox="0 0 48 48" className="absolute left-0 top-0 h-12 w-12 text-lime" style={{ x, y, translateX: '-50%', translateY: '-50%' }} animate={{ scale: down ? 0.8 : 1, rotate: down ? 45 : 0 }}>
-          <circle cx="24" cy="24" r="15" fill="none" stroke="currentColor" strokeWidth="1.5" opacity=".9" />
+  return (
+    <div className={`pointer-events-none fixed inset-0 z-[100] mix-blend-difference transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0'}`} aria-hidden>
+      {mode === 'aim' ? (
+        <motion.svg viewBox="0 0 48 48" className="absolute left-0 top-0 h-12 w-12 text-white" style={{ x, y, translateX: '-50%', translateY: '-50%' }} animate={{ scale: down ? 0.8 : 1, rotate: down ? 45 : 0 }}>
+          <circle cx="24" cy="24" r="15" fill="none" stroke="currentColor" strokeWidth="1.5" />
           <path d="M24 2v12M24 34v12M2 24h12M34 24h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           <circle cx="24" cy="24" r="1.6" fill="currentColor" />
         </motion.svg>
-      </div>
-    );
-  const size = label ? 96 : hover ? 56 : 34;
-  return (
-    <div className="pointer-events-none fixed inset-0 z-[100]" aria-hidden>
-      <motion.div className="absolute left-0 top-0 h-1.5 w-1.5 rounded-full bg-white mix-blend-difference" style={{ x, y, translateX: '-50%', translateY: '-50%' }} />
-      <motion.div
-        className={`absolute left-0 top-0 grid place-items-center rounded-full border ${label ? 'border-transparent bg-lime text-void' : 'border-white/60 mix-blend-difference'}`}
-        style={{ x: rx, y: ry, translateX: '-50%', translateY: '-50%' }}
-        animate={{ width: size, height: size, scale: down ? 0.85 : 1 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-      >
-        {label && <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em]">{label}</span>}
-      </motion.div>
+      ) : (
+        <>
+          <motion.div className="absolute left-0 top-0 h-1.5 w-1.5 rounded-full bg-white" style={{ x, y, translateX: '-50%', translateY: '-50%' }} />
+          <motion.div
+            className="absolute left-0 top-0 rounded-full border border-white"
+            style={{ x: rx, y: ry, translateX: '-50%', translateY: '-50%' }}
+            animate={{ width: mode === 'hover' ? 46 : 30, height: mode === 'hover' ? 46 : 30, scale: down ? 0.8 : 1, opacity: mode === 'hover' ? 1 : 0.7 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 26 }}
+          />
+        </>
+      )}
     </div>
   );
 };

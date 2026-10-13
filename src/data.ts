@@ -149,3 +149,17 @@ export const TEAM: Member[] = [
   { id: 'b', name: 'Шеф Проекта', role: 'Продюсер и идеи', head: 'team/head-2.webp', color: '#8b6cff', shirt: '#5b43c4', cheer: 'Сроки — святое!' },
   { id: 'c', name: 'Маэстро 3D', role: 'Дизайн и 3D', head: 'team/head-3.webp', color: '#3ee6ff', shirt: '#137d92', cheer: 'Сделаем красиво!' },
 ];
+
+// Награды в игре «Убеги от дедлайна»: сколько очков — какая скидка. Поменяйте на свои условия (или уберите коды).
+export const PROMOS = [
+  { score: 400, label: 'Скидка 5% на сайт', code: 'MIR5' },
+  { score: 1000, label: 'Скидка 10% на сайт', code: 'MIR10' },
+  { score: 2000, label: 'Скидка 15% на сайт', code: 'MIR15' },
+];
+
+// Особенности героев в игре (по id из TEAM)
+export const PERKS: Record<string, { label: string; jump: number; coffee: number; shield: number }> = {
+  a: { label: 'Прыгает выше всех', jump: 1.1, coffee: 1, shield: 0 },
+  b: { label: 'Кофе действует вдвое дольше', jump: 1, coffee: 2, shield: 0 },
+  c: { label: 'Переживает одно столкновение', jump: 1, coffee: 1, shield: 1 },
+};

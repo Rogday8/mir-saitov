@@ -92,14 +92,10 @@ html.lenis body {
 
 .text-aurora {
   background: linear-gradient(100deg, var(--color-violet), var(--color-cyan) 45%, var(--color-lime) 80%, var(--color-violet));
-  background-size: 220% 100%;
+  background-size: 100% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: aurora 9s linear infinite;
-}
-@keyframes aurora {
-  to { background-position: -220% 0; }
 }
 
 .text-outline {
@@ -111,7 +107,6 @@ html.lenis body {
 .no-scrollbar { scrollbar-width: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .text-aurora { animation: none; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

@@ -98,7 +98,9 @@ const CubeDemo: React.FC = () => {
   const box = useRef<HTMLDivElement>(null);
   const auto = useRef(35);
   const hovering = useRef(false);
+  const inView = useInView(box);
   useEffect(() => {
+    if (!inView) return;
     let raf = 0;
     const loop = () => {
       if (!hovering.current) {
@@ -109,7 +111,7 @@ const CubeDemo: React.FC = () => {
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [ry]);
+  }, [ry, inView]);
   const faces = [
     { t: 'rotateY(0deg)', c: 'from-violet to-cyan' },
     { t: 'rotateY(90deg)', c: 'from-cyan to-lime' },
@@ -148,38 +150,37 @@ const CubeDemo: React.FC = () => {
   );
 };
 
-// 3. Буквы разбегаются от курсора
-const Letter: React.FC<{ ch: string; mouse: React.MutableRefObject<{ x: number; y: number } | null>; style?: React.CSSProperties }> = ({ ch, mouse, style }) => {
+// 3. Буквы разбегаются от курсора (считаем только когда мышь двигается над плиткой)
+type Pointer = { x: number; y: number } | null;
+const Letter: React.FC<{ ch: string; subs: React.MutableRefObject<Set<(m: Pointer) => void>>; style?: React.CSSProperties }> = ({ ch, subs, style }) => {
   const ref = useRef<HTMLSpanElement>(null);
   const x = useSpring(0, { stiffness: 200, damping: 12 });
   const y = useSpring(0, { stiffness: 200, damping: 12 });
   const r = useSpring(0, { stiffness: 200, damping: 12 });
   useEffect(() => {
-    let raf = 0;
-    const loop = () => {
-      const m = mouse.current;
+    const fn = (m: Pointer) => {
       const el = ref.current;
-      if (el) {
-        if (m) {
-          const b = el.getBoundingClientRect();
-          const dx = b.left + b.width / 2 - m.x;
-          const dy = b.top + b.height / 2 - m.y;
-          const d = Math.hypot(dx, dy);
-          const f = Math.max(0, 1 - d / 120);
-          x.set((dx / (d || 1)) * f * 38);
-          y.set((dy / (d || 1)) * f * 38);
-          r.set(f * (dx > 0 ? 25 : -25));
-        } else {
-          x.set(0);
-          y.set(0);
-          r.set(0);
-        }
+      if (!el || !m) {
+        x.set(0);
+        y.set(0);
+        r.set(0);
+        return;
       }
-      raf = requestAnimationFrame(loop);
+      const b = el.getBoundingClientRect();
+      const dx = b.left + b.width / 2 - m.x;
+      const dy = b.top + b.height / 2 - m.y;
+      const d = Math.hypot(dx, dy);
+      const f = Math.max(0, 1 - d / 120);
+      x.set((dx / (d || 1)) * f * 38);
+      y.set((dy / (d || 1)) * f * 38);
+      r.set(f * (dx > 0 ? 25 : -25));
     };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [mouse, x, y, r]);
+    const set = subs.current;
+    set.add(fn);
+    return () => {
+      set.delete(fn);
+    };
+  }, [subs, x, y, r]);
   return (
     <motion.span ref={ref} className="inline-block" style={{ ...style, x, y, rotate: r }}>
       {ch}
@@ -187,16 +188,13 @@ const Letter: React.FC<{ ch: string; mouse: React.MutableRefObject<{ x: number; 
   );
 };
 const MotionDemo: React.FC = () => {
-  const mouse = useRef<{ x: number; y: number } | null>(null);
+  const subs = useRef(new Set<(m: Pointer) => void>());
+  const send = (m: Pointer) => subs.current.forEach((fn) => fn(m));
   return (
-    <div
-      className="grid h-full w-full place-items-center"
-      onPointerMove={(e) => (mouse.current = { x: e.clientX, y: e.clientY })}
-      onPointerLeave={() => (mouse.current = null)}
-    >
+    <div className="grid h-full w-full place-items-center" onPointerMove={(e) => send({ x: e.clientX, y: e.clientY })} onPointerLeave={() => send(null)}>
       <div className="select-none text-center font-display text-[13vw] font-semibold leading-none tracking-tight sm:text-6xl">
         {[...'живое'].map((c, i) => (
-          <Letter key={i} ch={c} mouse={mouse} style={auroraLetter(i, 5)} />
+          <Letter key={i} ch={c} subs={subs} style={auroraLetter(i, 5)} />
         ))}
         <div className="mt-3 font-mono text-[10px] font-normal uppercase tracking-[0.25em] text-haze">проведите курсором</div>
       </div>

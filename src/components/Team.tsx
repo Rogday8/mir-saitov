@@ -1,7 +1,8 @@
-import React, { useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import React, { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, animate, motion, useInView, useMotionValue } from 'motion/react';
 import { TEAM, type Member } from '../data';
 import Chibi from './Chibi';
+import RunnerGame from './RunnerGame';
 import { Eyebrow, SplitReveal } from './ui';
 
 // «Стол команды»: всё, что на нём лежит, можно таскать. Клик по человечку — прыгает и выкрикивает девиз.
@@ -12,31 +13,98 @@ const NOTES = [
   { t: 'Баги — не пройдут', c: '#9be7ff', r: 7 },
 ];
 
-const Person: React.FC<{ m: Member; desk: React.RefObject<HTMLDivElement | null>; start: { x: string; y: string }; size: number }> = ({ m, desk, start, size }) => {
+const Person: React.FC<{ m: Member; desk: React.RefObject<HTMLDivElement | null>; start: { x: string; y: string }; size: number; active: boolean }> = ({
+  m,
+  desk,
+  start,
+  size,
+  active,
+}) => {
   const [cheer, setCheer] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [walking, setWalking] = useState(false);
+  const [flip, setFlip] = useState(false);
   const moved = useRef(false);
+  const busy = useRef(false);
+  const self = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  // сам гуляет по столу: идёт к случайной точке, отдыхает, идёт дальше (пока стол на экране и его не трогают)
+  useEffect(() => {
+    if (!active) return;
+    let timer = 0;
+    let anim: { stop: () => void } | null = null;
+    const step = () => {
+      const d = desk.current;
+      const el = self.current;
+      if (!d || !el || busy.current) {
+        timer = window.setTimeout(step, 1500);
+        return;
+      }
+      const D = d.getBoundingClientRect();
+      const E = el.getBoundingClientRect();
+      // текущее положение элемента внутри стола и куда можно дойти
+      const curL = E.left - D.left;
+      const curT = E.top - D.top;
+      const tl = Math.random() * Math.max(0, D.width - E.width);
+      const tt = Math.random() * Math.max(0, D.height * 0.55 - E.height * 0.3);
+      const dx = tl - curL;
+      const dy = tt - curT;
+      const dist = Math.hypot(dx, dy);
+      setFlip(dx < 0);
+      setWalking(true);
+      const dur = Math.max(1.2, dist / 70);
+      const ax = animate(x, x.get() + dx, { duration: dur, ease: 'linear' });
+      const ay = animate(y, y.get() + dy, { duration: dur, ease: 'linear' });
+      anim = { stop: () => (ax.stop(), ay.stop()) };
+      ax.then(() => {
+        setWalking(false);
+        timer = window.setTimeout(step, 2200 + Math.random() * 3500);
+      });
+    };
+    timer = window.setTimeout(step, 1200 + Math.random() * 2500);
+    return () => {
+      clearTimeout(timer);
+      anim?.stop();
+      setWalking(false);
+    };
+  }, [active, desk, x, y]);
+
   return (
     <motion.div
+      ref={self}
       drag
       dragConstraints={desk}
       dragElastic={0.15}
       dragTransition={{ bounceStiffness: 300, bounceDamping: 18 }}
       onDragStart={() => {
         moved.current = true;
+        busy.current = true;
         setDragging(true);
       }}
-      onDragEnd={() => setDragging(false)}
-      onPointerDown={() => (moved.current = false)}
+      onDragEnd={() => {
+        setDragging(false);
+        setTimeout(() => (busy.current = false), 2500);
+      }}
+      onPointerDown={() => {
+        moved.current = false;
+        x.stop();
+        y.stop();
+        setWalking(false);
+      }}
       onClick={() => {
         if (moved.current) return;
+        busy.current = true;
         setCheer(true);
-        setTimeout(() => setCheer(false), 1800);
+        setTimeout(() => {
+          setCheer(false);
+          busy.current = false;
+        }, 1800);
       }}
       whileDrag={{ scale: 1.08, rotate: -4, zIndex: 30 }}
       className="absolute z-10 cursor-grab touch-none active:cursor-grabbing"
-      style={{ left: start.x, top: start.y }}
-      data-cursor="Тащи"
+      style={{ left: start.x, top: start.y, x, y }}
     >
       <AnimatePresence>
         {cheer && (
@@ -50,12 +118,12 @@ const Person: React.FC<{ m: Member; desk: React.RefObject<HTMLDivElement | null>
           </motion.div>
         )}
       </AnimatePresence>
-      <Chibi m={m} size={size} mode={cheer ? 'cheer' : dragging ? 'run' : 'idle'} />
+      <Chibi m={m} size={size} flip={flip} mode={cheer ? 'cheer' : dragging || walking ? 'run' : 'idle'} />
       <div className="mt-1 text-center">
-        <div className="font-display text-[15px] font-semibold" style={{ color: m.color }}>
+        <div className="font-display text-[12px] font-semibold sm:text-[15px]" style={{ color: m.color }}>
           {m.name}
         </div>
-        <div className="text-[11px] text-haze">{m.role}</div>
+        <div className="hidden text-[11px] text-haze sm:block">{m.role}</div>
       </div>
     </motion.div>
   );
@@ -63,6 +131,7 @@ const Person: React.FC<{ m: Member; desk: React.RefObject<HTMLDivElement | null>
 
 const Team: React.FC = () => {
   const desk = useRef<HTMLDivElement>(null);
+  const deskInView = useInView(desk, { margin: '-10% 0px' });
   // на телефоне человечки помельче и «лесенкой», чтобы не стоять друг на друге
   const small = typeof window !== 'undefined' && window.innerWidth < 640;
   const spots = small
@@ -86,7 +155,7 @@ const Team: React.FC = () => {
           </h2>
         </div>
         <p className="max-w-sm font-[Caveat,cursive] text-[15px] text-haze sm:text-[17px]">
-          ← всё на этом столе можно двигать. Нажмите на любого из нас — узнаете наш девиз →
+          ← всё на этом столе можно двигать. Мы тут гуляем — поймайте любого и нажмите, узнаете девиз →
         </p>
       </div>
 
@@ -96,7 +165,7 @@ const Team: React.FC = () => {
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_50%_40%,rgba(139,108,255,.14),transparent_70%)]" />
         {TEAM.map((m, i) => (
-          <Person key={m.id} m={m} desk={desk} start={spots[i]} size={small ? 82 : 118} />
+          <Person key={m.id} m={m} desk={desk} start={spots[i]} size={small ? 82 : 118} active={deskInView} />
         ))}
         {NOTES.map((n, i) => (
           <motion.div
@@ -108,29 +177,13 @@ const Team: React.FC = () => {
             initial={{ rotate: n.r }}
             className="absolute z-[5] w-36 cursor-grab touch-none rounded-sm p-3 font-display text-[14px] font-semibold leading-snug text-void shadow-[0_12px_30px_rgba(0,0,0,.35)] active:cursor-grabbing"
             style={{ background: n.c, left: `${small ? [4, 50, 8, 52][i] : [6, 30, 58, 80][i]}%`, top: `${small ? [62, 66, 80, 82][i] : [64, 70, 66, 58][i]}%` }}
-            data-cursor="Тащи"
           >
             {n.t}
           </motion.div>
         ))}
-        {/* карточка «сыграйте с нами» */}
-        <motion.a
-          href="#/play"
-          drag
-          dragConstraints={desk}
-          whileDrag={{ scale: 1.08, zIndex: 30 }}
-          initial={{ rotate: 4 }}
-          className="absolute right-[4%] top-[6%] z-[6] hidden w-56 touch-none rounded-2xl border border-white/15 bg-void/90 p-4 shadow-2xl md:block"
-          onClick={(e) => e.preventDefault()}
-          onDoubleClick={() => (window.location.hash = '#/play')}
-          data-cursor="Тащи"
-        >
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-lime">на выступлении</div>
-          <div className="mt-1 font-display text-lg font-semibold leading-tight">Гонка болельщиков</div>
-          <p className="mt-1 text-[12px] leading-snug text-haze">Зал сканирует QR и жмёт кнопку в телефоне — мы бежим наперегонки.</p>
-          <span className="mt-3 inline-block font-mono text-[10px] uppercase tracking-[0.2em] text-haze/70">двойной клик — открыть пульт</span>
-        </motion.a>
       </div>
+
+      <RunnerGame />
     </section>
   );
 };

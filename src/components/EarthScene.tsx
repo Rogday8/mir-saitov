@@ -1,10 +1,10 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { WORKS } from '../data';
 
-// Первый экран: Земля (снимки NASA — общественное достояние) со спутниками-сайтами на орбите.
-// Клик по Земле — она «растворяется», а внутри растёт планета, собранная из наших сайтов.
+// Первый экран: Земля (снимки NASA — общественное достояние).
+// Клик по Земле — она «растворяется», и появляется Сатурн, вокруг которого летают наши сайты.
 
 const base = import.meta.env.BASE_URL;
 
@@ -88,7 +88,7 @@ const Earth: React.FC<{ t: React.MutableRefObject<number>; onEnter: () => void; 
           }}
           onPointerOut={() => onHover(false)}
         >
-          <sphereGeometry args={[1.35, 96, 96]} />
+          <sphereGeometry args={[1.35, 72, 72]} />
           <shaderMaterial
             ref={earthMat}
             uniforms={u}
@@ -166,163 +166,88 @@ const Earth: React.FC<{ t: React.MutableRefObject<number>; onEnter: () => void; 
   );
 };
 
-// ——— Планета из сайтов ———
-const tileFrag = `
-  uniform sampler2D uMap; uniform float uHover; uniform float uShow; varying vec2 vUv;
-  float rbox(vec2 p, vec2 b, float r){ vec2 q = abs(p) - b + r; return length(max(q,0.)) + min(max(q.x,q.y),0.) - r; }
+// ——— Сатурн: полосатый газовый гигант с кольцами (всё процедурное) ———
+const SATURN_FRAG = /* glsl */ `
+  uniform float uTime; uniform float uShow; uniform vec3 uSun;
+  varying vec2 vUv; varying vec3 vPos; varying vec3 vWN; varying vec3 vWP;
+  ${NOISE}
   void main(){
-    vec2 p = vUv - .5;
-    float d = rbox(p * vec2(1.6, 1.), vec2(.8, .5), .08);
-    if (d > 0.) discard;
-    vec3 c = texture2D(uMap, vUv).rgb * (.72 + uHover * .4);
-    float edge = smoothstep(-.05, 0., d);
-    c = mix(c, vec3(.78,1.,.3), edge * (.25 + uHover * .75));
-    gl_FragColor = vec4(c, uShow);
+    vec3 N = normalize(vWN);
+    vec3 V = normalize(cameraPosition - vWP);
+    float lat = vUv.y;
+    float b = lat + (fbm(vec3(vUv.x * 7., lat * 22., uTime * .03)) - .5) * .05;
+    vec3 c1 = vec3(.93, .83, .63), c2 = vec3(.78, .62, .42), c3 = vec3(.99, .93, .8), c4 = vec3(.62, .48, .34);
+    vec3 col = mix(c2, c1, sin(b * 64.) * .5 + .5);
+    col = mix(col, c3, (sin(b * 23. + 1.3) * .5 + .5) * .35);
+    col = mix(col, c4, smoothstep(.8, 1., sin(b * 9.) * .5 + .5) * .45);
+    col *= .72 + .28 * smoothstep(0., .22, min(lat, 1. - lat));
+    float diff = smoothstep(-.25, .9, dot(N, uSun));
+    col *= .1 + diff * 1.08;
+    col += vec3(1., .86, .62) * pow(1. - max(dot(N, V), 0.), 3.) * .35 * diff;
+    gl_FragColor = vec4(col, uShow);
   }`;
 
-const Tile: React.FC<{ i: number; pos: THREE.Vector3; slug: string; tex: THREE.Texture; show: React.MutableRefObject<number>; hovered: boolean }> = ({ i, pos, slug, tex, show, hovered }) => {
-  const ref = useRef<THREE.Mesh>(null);
-  const h = useRef(0);
-  const u = useMemo(() => ({ uMap: { value: tex }, uHover: { value: 0 }, uShow: { value: 0 } }), [tex]);
-  const mat = useRef<THREE.ShaderMaterial>(null);
-  useBind(mat, u);
-  useEffect(() => {
-    ref.current?.lookAt(pos.clone().multiplyScalar(2));
-  }, [pos]);
-  useFrame((_, dt) => {
-    h.current += ((hovered ? 1 : 0) - h.current) * Math.min(1, dt * 10);
-    u.uHover.value = h.current;
-    u.uShow.value = show.current;
-    if (ref.current) {
-      const s = 1 + h.current * 0.45;
-      ref.current.scale.setScalar(s);
-      ref.current.position.copy(pos).multiplyScalar(1 + h.current * 0.12);
-    }
-  });
-  return (
-    <mesh ref={ref} position={pos} userData={{ slug, i }}>
-      <planeGeometry args={[0.42, 0.26]} />
-      <shaderMaterial ref={mat} uniforms={u} transparent depthWrite={false} side={THREE.FrontSide} vertexShader={`varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`} fragmentShader={tileFrag} />
-    </mesh>
-  );
-};
+const RING_IN = 1.32;
+const RING_OUT = 2.35;
+const RING_FRAG = /* glsl */ `
+  uniform float uShow; varying vec3 vLocal;
+  void main(){
+    float u = (length(vLocal.xy) - ${RING_IN.toFixed(2)}) / ${(RING_OUT - RING_IN).toFixed(2)};
+    float bands = .55 + .45 * sin(u * 92.) * sin(u * 37. + 1.);
+    float edge = smoothstep(0., .04, u) * (1. - smoothstep(.95, 1., u));
+    float cassini = 1. - smoothstep(.55, .575, u) * (1. - smoothstep(.62, .645, u));
+    float inner = mix(.25, 1., smoothstep(0., .3, u));
+    float a = edge * cassini * inner * (.4 + .6 * bands) * uShow * .9;
+    vec3 col = mix(vec3(.72, .62, .48), vec3(.97, .9, .75), bands);
+    gl_FragColor = vec4(col, a);
+  }`;
 
-const SitesPlanet: React.FC<{ t: React.MutableRefObject<number>; onHover: (slug: string | null) => void; onPick: (slug: string) => void }> = ({ t, onHover, onPick }) => {
+const Saturn: React.FC<{ show: React.MutableRefObject<number> }> = ({ show }) => {
   const group = useRef<THREE.Group>(null);
-  const show = useRef(0);
-  const [hovered, setHovered] = useState<number | null>(null);
-  const textures = useMemo(
-    () =>
-      Object.fromEntries(
-        WORKS.map((w) => {
-          const tx = new THREE.TextureLoader().load(`${base}works/${w.slug}-thumb.webp`);
-          tx.colorSpace = THREE.SRGBColorSpace;
-          return [w.slug, tx];
-        }),
-      ),
-    [],
-  );
-  // плитки по «спирали Фибоначчи» — ровно покрывают шар
-  const tiles = useMemo(() => {
-    const N = 46;
-    const out: { pos: THREE.Vector3; slug: string }[] = [];
-    for (let i = 0; i < N; i++) {
-      const y = 1 - (i / (N - 1)) * 2;
-      const r = Math.sqrt(1 - y * y);
-      const th = i * Math.PI * (3 - Math.sqrt(5));
-      out.push({ pos: new THREE.Vector3(Math.cos(th) * r, y, Math.sin(th) * r).multiplyScalar(1.08), slug: WORKS[i % WORKS.length].slug });
-    }
-    return out;
-  }, []);
-  // вращение: само + перетаскивание с инерцией
-  const drag = useRef({ on: false, x: 0, y: 0, vx: 0.18, vy: 0 });
-  const { gl } = useThree();
-  useEffect(() => {
-    const el = gl.domElement;
-    const down = (e: PointerEvent) => {
-      if (t.current < 0.6) return;
-      drag.current.on = true;
-      drag.current.x = e.clientX;
-      drag.current.y = e.clientY;
-    };
-    const move = (e: PointerEvent) => {
-      const d = drag.current;
-      if (!d.on) return;
-      d.vx = (e.clientX - d.x) * 0.006 * 60;
-      d.vy = (e.clientY - d.y) * 0.006 * 60;
-      d.x = e.clientX;
-      d.y = e.clientY;
-    };
-    const up = () => (drag.current.on = false);
-    el.addEventListener('pointerdown', down);
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-    return () => {
-      el.removeEventListener('pointerdown', down);
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-    };
-  }, [gl, t]);
-
+  const ball = useRef<THREE.Mesh>(null);
+  const pu = useMemo(() => ({ uTime: { value: 0 }, uShow: { value: 0 }, uSun: { value: SUN.clone() } }), []);
+  const ru = useMemo(() => ({ uShow: { value: 0 } }), []);
+  const pm = useRef<THREE.ShaderMaterial>(null);
+  const rm = useRef<THREE.ShaderMaterial>(null);
+  useBind(pm, pu);
+  useBind(rm, ru);
   useFrame((_, dt) => {
-    show.current = THREE.MathUtils.smoothstep(t.current, 0.3, 0.95);
+    const sh = show.current;
+    pu.uTime.value += dt;
+    pu.uShow.value = Math.min(1, sh * 1.4);
+    ru.uShow.value = THREE.MathUtils.smoothstep(sh, 0.25, 1);
+    if (ball.current) ball.current.rotation.y += dt * 0.09;
     const g = group.current;
-    if (!g) return;
-    const s = 0.2 + show.current * 0.8;
-    g.scale.setScalar(s);
-    g.visible = show.current > 0.01;
-    const d = drag.current;
-    if (!d.on) {
-      d.vx += (0.18 - d.vx) * Math.min(1, dt * 1.5);
-      d.vy += (0 - d.vy) * Math.min(1, dt * 2);
+    if (g) {
+      // «распускается»: планета растёт, кольца разворачиваются
+      const e = 1 - Math.pow(1 - sh, 3);
+      g.scale.setScalar(0.35 + e * 0.65);
+      g.visible = sh > 0.005;
     }
-    g.rotation.y += d.vx * dt;
-    g.rotation.x = THREE.MathUtils.clamp(g.rotation.x + d.vy * dt, -0.8, 0.8);
   });
-
-  const pick = (e: ThreeEvent<MouseEvent>) => {
-    e.stopPropagation();
-    const slug = (e.object.userData as { slug?: string }).slug;
-    if (slug && t.current > 0.8) onPick(slug);
-  };
-
   return (
-    <group ref={group}>
-      {/* светящееся ядро */}
-      <mesh>
-        <sphereGeometry args={[0.98, 48, 48]} />
+    <group ref={group} rotation={[0.42, 0, -0.2]}>
+      <mesh ref={ball}>
+        <sphereGeometry args={[1, 64, 64]} />
+        <shaderMaterial ref={pm} uniforms={pu} transparent vertexShader={EARTH_VERT} fragmentShader={SATURN_FRAG} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[RING_IN, RING_OUT, 160, 1]} />
         <shaderMaterial
+          ref={rm}
+          uniforms={ru}
           transparent
-          uniforms={{ uShow: { value: 1 } }}
-          vertexShader={`varying vec3 vN; varying vec3 vView; void main(){ vN = normalize(normalMatrix * normal); vec4 mv = modelViewMatrix * vec4(position,1.); vView = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`}
-          fragmentShader={`varying vec3 vN; varying vec3 vView; void main(){ float fr = pow(1. - max(dot(vN, vView), 0.), 2.); vec3 c = mix(vec3(.06,.04,.16), vec3(.55,.42,1.), fr); c += vec3(.24,.9,1.) * pow(fr, 4.) * .8; gl_FragColor = vec4(c, .96); }`}
+          depthWrite={false}
+          side={THREE.DoubleSide}
+          vertexShader={`varying vec3 vLocal; void main(){ vLocal = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`}
+          fragmentShader={RING_FRAG}
         />
       </mesh>
-      <group
-        onPointerMove={(e) => {
-          e.stopPropagation();
-          const ud = e.object.userData as { i?: number };
-          const idx = typeof ud.i === 'number' ? ud.i : null;
-          if (idx !== hovered) {
-            setHovered(idx);
-            onHover(idx === null ? null : tiles[idx].slug);
-          }
-        }}
-        onPointerOut={() => {
-          setHovered(null);
-          onHover(null);
-        }}
-        onClick={pick}
-      >
-        {tiles.map((tl, i) => (
-          <Tile key={i} i={i} pos={tl.pos} slug={tl.slug} tex={textures[tl.slug]} show={show} hovered={hovered === i} />
-        ))}
-      </group>
     </group>
   );
 };
 
-// ——— спутники-сайты на орбите вокруг Земли ———
+// ——— карточки сайтов на орбите вокруг Сатурна ———
 const cardFrag = `
   uniform sampler2D uMap; uniform float uHover; uniform float uOpacity; varying vec2 vUv;
   float rbox(vec2 p, vec2 b, float r){ vec2 q = abs(p) - b + r; return length(max(q,0.)) + min(max(q.x,q.y),0.) - r; }
@@ -333,47 +258,49 @@ const cardFrag = `
     vec3 c = texture2D(uMap, vUv).rgb;
     float edge = smoothstep(-.035, 0., d);
     c = mix(c, vec3(.78,1.,.3), edge * uHover * .9);
-    c *= .8 + uHover * .3;
+    c *= .82 + uHover * .28;
     gl_FragColor = vec4(c, a * uOpacity);
   }`;
 
-const OrbitCard: React.FC<{ index: number; total: number; slug: string; radius: number; t: React.MutableRefObject<number>; onPick: () => void; onHover: (on: boolean) => void }> = ({
-  index,
-  total,
-  slug,
-  radius,
-  t,
-  onPick,
-  onHover,
-}) => {
+const OrbitCard: React.FC<{
+  index: number;
+  total: number;
+  slug: string;
+  radius: number;
+  show: React.MutableRefObject<number>;
+  onPick: () => void;
+  onHover: (slug: string | null) => void;
+}> = ({ index, total, slug, radius, show, onPick, onHover }) => {
   const ref = useRef<THREE.Mesh>(null);
   const hover = useRef(0);
   const [isHover, setHover] = useState(false);
   const { camera } = useThree();
   const tex = useTex(`works/${slug}-thumb.webp`);
-  const u = useMemo(() => ({ uMap: { value: tex }, uHover: { value: 0 }, uOpacity: { value: 1 } }), [tex]);
+  const u = useMemo(() => ({ uMap: { value: tex }, uHover: { value: 0 }, uOpacity: { value: 0 } }), [tex]);
   const mat = useRef<THREE.ShaderMaterial>(null);
   useBind(mat, u);
-  const tilt = useMemo(() => new THREE.Euler(0.38, 0, -0.28), []);
+  const tilt = useMemo(() => new THREE.Euler(0.42, 0, -0.2), []);
   const v = useMemo(() => new THREE.Vector3(), []);
   const a0 = (index / total) * Math.PI * 2;
+  const angle = useRef(a0);
 
-  useFrame(({ clock }, dt) => {
+  useFrame((_, dt) => {
     const m = ref.current;
     if (!m) return;
+    const sh = THREE.MathUtils.smoothstep(show.current, 0.45, 1);
     hover.current += ((isHover ? 1 : 0) - hover.current) * Math.min(1, dt * 8);
-    const away = THREE.MathUtils.smoothstep(t.current, 0, 0.5);
-    const r = radius * (1 + away * 0.9);
-    const a = a0 + clock.elapsedTime * 0.1;
-    v.set(Math.cos(a) * r, 0, Math.sin(a) * r).applyEuler(tilt);
+    // при наведении карточка почти останавливается — по ней легко попасть
+    angle.current += dt * 0.1 * (1 - hover.current * 0.85);
+    const r = radius * (0.6 + sh * 0.4);
+    v.set(Math.cos(angle.current) * r, 0, Math.sin(angle.current) * r).applyEuler(tilt);
     m.position.copy(v);
     m.quaternion.copy(camera.quaternion);
     const front = (v.z + r) / (2 * r);
-    m.scale.setScalar((0.6 + front * 0.4) * (1 + hover.current * 0.35));
+    m.scale.setScalar((0.62 + front * 0.38) * (1 + hover.current * 0.4) * (0.4 + sh * 0.6));
     u.uHover.value = hover.current;
-    u.uOpacity.value = (0.35 + front * 0.65) * (1 - away);
-    m.visible = away < 0.99;
-    m.renderOrder = v.z > 0 ? 2 : 0;
+    u.uOpacity.value = (0.45 + front * 0.55) * sh;
+    m.visible = sh > 0.01;
+    m.renderOrder = v.z > 0 ? 3 : 0;
   });
 
   return (
@@ -381,21 +308,28 @@ const OrbitCard: React.FC<{ index: number; total: number; slug: string; radius: 
       ref={ref}
       onPointerOver={(e) => {
         e.stopPropagation();
-        if (t.current > 0.1) return;
+        if (show.current < 0.8) return;
         setHover(true);
-        onHover(true);
+        onHover(slug);
       }}
       onPointerOut={() => {
         setHover(false);
-        onHover(false);
+        onHover(null);
       }}
       onClick={(e) => {
         e.stopPropagation();
-        if (t.current < 0.1) onPick();
+        if (show.current > 0.8) onPick();
       }}
     >
       <planeGeometry args={[1.0, 0.625]} />
-      <shaderMaterial ref={mat} uniforms={u} vertexShader={`varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`} fragmentShader={cardFrag} transparent depthWrite={false} />
+      <shaderMaterial
+        ref={mat}
+        uniforms={u}
+        vertexShader={`varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`}
+        fragmentShader={cardFrag}
+        transparent
+        depthWrite={false}
+      />
     </mesh>
   );
 };
@@ -424,18 +358,18 @@ const Stars: React.FC<{ count: number }> = ({ count }) => {
   );
 };
 
-// Камера: отъезжает на узких экранах; при входе внутрь — приближается
+// Камера: отъезжает на узких экранах; внутри — чуть дальше, чтобы Сатурн с орбитой помещался целиком
 const CameraRig: React.FC<{ t: React.MutableRefObject<number> }> = ({ t }) => {
   const { camera, size } = useThree();
   useFrame(() => {
     const aspect = size.width / size.height;
     const z = aspect < 0.7 ? 12 : aspect < 1.1 ? 9.4 : 6.6;
-    camera.position.z = z - THREE.MathUtils.smoothstep(t.current, 0, 1) * (aspect < 1.1 ? 2.6 : 1.4);
+    camera.position.z = z + THREE.MathUtils.smoothstep(t.current, 0, 1) * (aspect < 1.1 ? 1.5 : 1.1);
   });
   return null;
 };
 
-// Группа: наклон за курсором, «наплыв» при загрузке, сдвиг при прокрутке
+// Группа: наклон за курсором, «наплыв» при загрузке, сдвиг при прокрутке; внутри — по центру экрана
 const Rig: React.FC<{ children: React.ReactNode; scroll: React.MutableRefObject<number>; t: React.MutableRefObject<number>; offsetX: number; offsetY: number }> = ({
   children,
   scroll,
@@ -450,24 +384,26 @@ const Rig: React.FC<{ children: React.ReactNode; scroll: React.MutableRefObject<
     const el = g.current;
     if (!el) return;
     const k = Math.min(1, dt * 3);
-    const inside = t.current;
-    el.rotation.x += (pointer.y * 0.16 * (1 - inside) - el.rotation.x) * k;
-    el.rotation.y += (pointer.x * 0.26 * (1 - inside) - el.rotation.y) * k;
+    el.rotation.x += (pointer.y * 0.14 - el.rotation.x) * k;
+    el.rotation.y += (pointer.x * 0.22 - el.rotation.y) * k;
     intro.current = Math.min(1, intro.current + dt / 2.2);
     const e = 1 - Math.pow(1 - intro.current, 3);
     el.scale.setScalar(0.72 + e * 0.28);
     const s = scroll.current;
-    el.position.set(offsetX * (1 - inside * 0.35), offsetY + s * 1.6, -s * 2.2);
+    const c = THREE.MathUtils.smoothstep(t.current, 0, 1);
+    el.position.set(offsetX * (1 - c), offsetY * (1 - c) + s * 1.6, -s * 2.2);
   });
   return <group ref={g}>{children}</group>;
 };
 
 // Плавный переход «Земля ↔ внутри»: t тянется к цели
-const Transition: React.FC<{ inside: boolean; t: React.MutableRefObject<number> }> = ({ inside, t }) => {
+const Transition: React.FC<{ inside: boolean; t: React.MutableRefObject<number>; show: React.MutableRefObject<number> }> = ({ inside, t, show }) => {
   useFrame((_, dt) => {
     const target = inside ? 1 : 0;
     t.current += (target - t.current) * Math.min(1, dt * (inside ? 0.75 : 1.6));
     if (Math.abs(target - t.current) < 0.001) t.current = target;
+    // Сатурн появляется, когда Земля уже почти растворилась
+    show.current = THREE.MathUtils.smoothstep(t.current, 0.3, 0.97);
   });
   return null;
 };
@@ -485,17 +421,25 @@ export interface EarthSceneProps {
 
 const EarthScene: React.FC<EarthSceneProps> = ({ inside, onEnter, onPickWork, onHoverSite, onHoverEarth, scroll, active, compact }) => {
   const t = useRef(0);
+  const show = useRef(0);
   return (
-    <Canvas camera={{ position: [0, 0, 6.6], fov: 42 }} dpr={compact ? [1, 1.5] : [1, 1.75]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }} frameloop={active ? 'always' : 'never'}>
-      <Transition inside={inside} t={t} />
+    <Canvas
+      camera={{ position: [0, 0, 6.6], fov: 42 }}
+      dpr={[1, compact ? 1.25 : 1.5]}
+      gl={{ antialias: !compact, alpha: true, powerPreference: 'high-performance' }}
+      frameloop={active ? 'always' : 'never'}
+    >
+      <Transition inside={inside} t={t} show={show} />
       <CameraRig t={t} />
-      <Stars count={compact ? 500 : 1200} />
+      <Stars count={compact ? 400 : 900} />
       <Rig scroll={scroll} t={t} offsetX={compact ? 0 : 1.75} offsetY={compact ? 1.2 : 0.25}>
         <Earth t={t} onEnter={onEnter} onHover={onHoverEarth} />
-        <SitesPlanet t={t} onHover={onHoverSite} onPick={onPickWork} />
-        {WORKS.map((w, i) => (
-          <OrbitCard key={w.slug} index={i} total={WORKS.length} slug={w.slug} radius={compact ? 2.45 : 2.9} t={t} onPick={() => onPickWork(w.slug)} onHover={onHoverEarth} />
-        ))}
+        <group scale={compact ? 0.68 : 1}>
+          <Saturn show={show} />
+          {WORKS.map((w, i) => (
+            <OrbitCard key={w.slug} index={i} total={WORKS.length} slug={w.slug} radius={compact ? 2.75 : 3.05} show={show} onPick={() => onPickWork(w.slug)} onHover={onHoverSite} />
+          ))}
+        </group>
       </Rig>
     </Canvas>
   );
