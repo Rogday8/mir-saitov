@@ -101,7 +101,7 @@ const Hero: React.FC<{ ready: boolean }> = ({ ready }) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ delay: 1.6, duration: 0.6 }}
-            className="absolute right-6 top-[18%] z-20 flex items-center gap-2 rounded-full border border-white/15 bg-void/50 py-2 pl-2 pr-4 text-[13px] font-semibold backdrop-blur-md max-lg:left-1/2 max-lg:right-auto max-lg:top-[46%] max-lg:-translate-x-1/2 lg:right-[8%]"
+            className="absolute right-6 top-[18%] z-20 flex items-center gap-2 rounded-full border border-white/15 bg-void/50 py-2 pl-2 pr-4 text-[13px] font-semibold backdrop-blur-md max-lg:left-1/2 max-lg:right-auto max-lg:top-[13%] max-lg:-translate-x-1/2 max-lg:whitespace-nowrap lg:right-[8%]"
           >
             <span className="relative grid h-7 w-7 place-items-center rounded-full bg-lime text-void">
               <span className="absolute inset-0 animate-ping rounded-full bg-lime/60" />
@@ -147,7 +147,7 @@ const Hero: React.FC<{ ready: boolean }> = ({ ready }) => {
 
       <div className={`pointer-events-none relative z-10 mx-auto flex h-full max-w-[1500px] flex-col justify-end px-5 pb-10 transition-opacity duration-700 sm:px-10 sm:pb-14 ${inside ? 'opacity-20' : ''}`}>
         <motion.div
-          className="mb-auto mt-28 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.3em] text-haze"
+          className="mb-auto mt-28 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.3em] text-haze max-lg:invisible"
           initial={{ opacity: 0 }}
           animate={ready ? { opacity: 1 } : {}}
           transition={{ delay: 0.6, duration: 1 }}

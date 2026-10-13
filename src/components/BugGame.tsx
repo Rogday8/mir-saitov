@@ -4,7 +4,7 @@ import { scrollToId } from '../lib/smooth';
 import { Eyebrow, Magnetic, SplitReveal } from './ui';
 
 // Мини-игра «Поймай баг»: 30 секунд, жуки ползают по «сайту», ловим кликом/тапом.
-type Kind = 'bug' | 'fast' | 'gold' | 'feature';
+type Kind = 'bug' | 'fast' | 'gold' | 'feature' | 'coffee' | 'deploy';
 interface Bug {
   id: number;
   kind: Kind;
@@ -25,7 +25,7 @@ interface Pop {
 }
 
 const DURATION = 30;
-const POINTS: Record<Kind, number> = { bug: 10, fast: 25, gold: 60, feature: -20 };
+const POINTS: Record<Kind, number> = { bug: 10, fast: 25, gold: 60, feature: -20, coffee: 5, deploy: 0 };
 const RANKS = [
   { min: 0, t: 'Стажёр QA', d: 'Баги пока побеждают. Но вы на верном пути!' },
   { min: 150, t: 'Тестировщик', d: 'Уверенно! Такой сайт уже можно показывать людям.' },
@@ -43,6 +43,13 @@ const readBest = () => {
 };
 
 const BugSvg: React.FC<{ kind: Kind }> = ({ kind }) => {
+  // бонусы: кофе замораживает жуков, «деплой» убирает всех с экрана
+  if (kind === 'coffee' || kind === 'deploy')
+    return (
+      <span className="grid h-full w-full place-items-center rounded-full text-[22px]" style={{ background: kind === 'coffee' ? '#ffd66b' : '#ff5fae', boxShadow: `0 0 18px ${kind === 'coffee' ? '#ffd66b' : '#ff5fae'}` }}>
+        {kind === 'coffee' ? '☕' : '🚀'}
+      </span>
+    );
   if (kind === 'feature')
     return (
       <svg viewBox="0 0 40 40" className="h-full w-full drop-shadow-[0_0_10px_rgba(62,230,255,.7)]" aria-hidden>
@@ -85,12 +92,14 @@ const BugGame: React.FC = () => {
   const [best, setBest] = useState(readBest);
   const [newBest, setNewBest] = useState(false);
   const lastHit = useRef(0);
+  const frozenUntil = useRef(0);
+  const [frozen, setFrozen] = useState(false);
   const scoreRef = useRef(0);
   const nextId = useRef(1);
 
   const spawn = (now: number, elapsed: number) => {
     const r = Math.random();
-    const kind: Kind = r < 0.06 ? 'gold' : r < 0.2 ? 'feature' : r < 0.42 ? 'fast' : 'bug';
+    const kind: Kind = r < 0.035 ? 'deploy' : r < 0.075 ? 'coffee' : r < 0.12 ? 'gold' : r < 0.26 ? 'feature' : r < 0.46 ? 'fast' : 'bug';
     const edge = Math.floor(Math.random() * 4);
     const x = edge === 0 ? -0.05 : edge === 1 ? 1.05 : Math.random();
     const y = edge === 2 ? -0.08 : edge === 3 ? 1.08 : Math.random();
@@ -102,10 +111,10 @@ const BugGame: React.FC = () => {
       x,
       y,
       a: toward,
-      v: (kind === 'fast' ? 0.32 : kind === 'gold' ? 0.4 : kind === 'feature' ? 0.14 : 0.16) * speedUp,
+      v: (kind === 'fast' ? 0.32 : kind === 'gold' ? 0.4 : kind === 'feature' || kind === 'coffee' || kind === 'deploy' ? 0.13 : 0.16) * speedUp,
       turn: (Math.random() - 0.5) * 2,
       born: now,
-      ttl: kind === 'gold' ? 2600 : 9000,
+      ttl: kind === 'gold' ? 2600 : kind === 'coffee' || kind === 'deploy' ? 4000 : 9000,
     });
   };
 
@@ -131,7 +140,12 @@ const BugGame: React.FC = () => {
         acc = 0;
         spawn(now, elapsed);
       }
+      const frozenNow = now < frozenUntil.current;
       for (const b of bugs.current) {
+        if (frozenNow && b.kind !== 'coffee' && b.kind !== 'deploy') {
+          b.born += dt * 1000; // замороженные не «стареют»
+          continue;
+        }
         b.turn += (Math.random() - 0.5) * dt * 6;
         b.turn = Math.max(-2.2, Math.min(2.2, b.turn));
         b.a += b.turn * dt;
@@ -167,6 +181,7 @@ const BugGame: React.FC = () => {
   }, [state]);
 
   const begin = () => {
+    frozenUntil.current = 0;
     bugs.current = [];
     scoreRef.current = 0;
     setScore(0);
@@ -181,6 +196,24 @@ const BugGame: React.FC = () => {
   const hit = useCallback((b: Bug, e: React.PointerEvent) => {
     e.stopPropagation();
     const now = performance.now();
+    if (b.kind === 'coffee') {
+      frozenUntil.current = now + 3000;
+      setFrozen(true);
+      setTimeout(() => setFrozen(false), 3000);
+    }
+    if (b.kind === 'deploy') {
+      // «деплой»: все жуки на экране пойманы разом
+      const caught = bugs.current.filter((x) => x.kind !== 'feature' && x.kind !== 'coffee' && x.kind !== 'deploy');
+      const sum = caught.reduce((s, x) => s + POINTS[x.kind], 0);
+      scoreRef.current += sum;
+      setScore(scoreRef.current);
+      bugs.current = bugs.current.filter((x) => x.kind === 'feature');
+      const id = nextId.current++;
+      setPops((p) => [...p, { id, x: b.x, y: b.y, text: `Деплой! +${sum}`, good: true }]);
+      setSplats((s) => [...s.slice(-14), ...caught.map((x, k) => ({ id: id * 100 + k, x: x.x, y: x.y, c: '#ff5fae' }))]);
+      setTimeout(() => setPops((p) => p.filter((x) => x.id !== id)), 1100);
+      return;
+    }
     const good = b.kind !== 'feature';
     const c = good && now - lastHit.current < 900 ? Math.min(5, combo + 1) : good ? 1 : 0;
     lastHit.current = good ? now : 0;
@@ -190,7 +223,7 @@ const BugGame: React.FC = () => {
     setScore(scoreRef.current);
     bugs.current = bugs.current.filter((x) => x.id !== b.id);
     const id = nextId.current++;
-    setPops((p) => [...p, { id, x: b.x, y: b.y, text: good ? `+${pts}${c > 1 ? ` ×${c}` : ''}` : 'Это фича! −20', good }]);
+    setPops((p) => [...p, { id, x: b.x, y: b.y, text: b.kind === 'coffee' ? 'Кофе! Баги замерли' : good ? `+${pts}${c > 1 ? ` ×${c}` : ''}` : 'Это фича! −20', good }]);
     setSplats((s) => [...s.slice(-14), { id, x: b.x, y: b.y, c: b.kind === 'fast' ? '#ff5fae' : b.kind === 'gold' ? '#c8ff4d' : b.kind === 'feature' ? '#3ee6ff' : '#8b6cff' }]);
     setTimeout(() => setPops((p) => p.filter((x) => x.id !== id)), 900);
   }, [combo]);
@@ -202,7 +235,7 @@ const BugGame: React.FC = () => {
       <style>{`@keyframes legs{from{transform:rotate(-6deg)}to{transform:rotate(6deg)}}@keyframes flap{from{transform:scaleX(1)}to{transform:scaleX(.55)}}`}</style>
       <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <Eyebrow n="04">Игра</Eyebrow>
+          <Eyebrow n="06">Игра</Eyebrow>
           <h2 className="mt-8 font-display text-[12vw] font-semibold leading-[0.9] tracking-[-0.04em] sm:text-[8vw] lg:text-[5.6vw]">
             <SplitReveal text="Поймай" /> <SplitReveal text="баг" delay={0.2} aurora />
           </h2>
@@ -255,6 +288,15 @@ const BugGame: React.FC = () => {
               ))}
             </div>
           </div>
+
+          {/* заморозка от кофе */}
+          <AnimatePresence>
+            {frozen && (
+              <motion.div className="pointer-events-none absolute inset-0 z-[1] grid place-items-center bg-cyan/10" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <span className="font-display text-5xl font-bold text-cyan/40">❄ стоп</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* пятна */}
           {splats.map((s) => (
@@ -312,17 +354,17 @@ const BugGame: React.FC = () => {
                 {state === 'idle' ? (
                   <div className="flex max-w-md flex-col items-center">
                     <div className="flex gap-3">
-                      {(['bug', 'fast', 'gold', 'feature'] as Kind[]).map((k) => (
+                      {(['bug', 'fast', 'gold', 'feature', 'coffee', 'deploy'] as Kind[]).map((k) => (
                         <div key={k} className="flex flex-col items-center gap-1">
                           <div className="h-11 w-11">
                             <BugSvg kind={k} />
                           </div>
-                          <span className={`font-mono text-[11px] ${k === 'feature' ? 'text-cyan' : 'text-haze'}`}>{POINTS[k] > 0 ? `+${POINTS[k]}` : POINTS[k]}</span>
+                          <span className={`font-mono text-[11px] ${k === 'feature' ? 'text-cyan' : 'text-haze'}`}>{k === 'coffee' ? 'стоп' : k === 'deploy' ? 'все' : POINTS[k] > 0 ? `+${POINTS[k]}` : POINTS[k]}</span>
                         </div>
                       ))}
                     </div>
                     <p className="mt-5 text-[15px] leading-relaxed text-haze">
-                      Ловите жуков кликом или тапом. Серия быстрых попаданий умножает очки. Голубые бабочки — это фичи, их не трогаем.
+                      Ловите жуков кликом или тапом. Серия быстрых попаданий умножает очки. ☕ — жуки замирают, 🚀 — деплой ловит всех сразу. Голубые бабочки — это фичи, их не трогаем.
                     </p>
                     <Magnetic className="mt-7">
                       <button onClick={begin} className="rounded-full bg-lime px-9 py-4 font-display text-lg font-semibold text-void transition-transform active:scale-95">

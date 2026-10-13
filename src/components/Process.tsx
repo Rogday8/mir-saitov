@@ -18,7 +18,7 @@ const Process: React.FC = () => {
   return (
     <section id="process" ref={ref} className="relative overflow-hidden py-28 sm:py-40">
       <div className="mx-auto max-w-[1500px] px-5 sm:px-10">
-        <Eyebrow n="03">Как работаем</Eyebrow>
+        <Eyebrow n="05">Как работаем</Eyebrow>
         <h2 className="mt-8 font-display text-[12vw] font-semibold leading-[0.9] tracking-[-0.04em] sm:text-[8vw] lg:text-[5.6vw]">
           <SplitReveal text="От идеи" /> <br className="sm:hidden" />
           <SplitReveal text="до запуска" delay={0.2} aurora />

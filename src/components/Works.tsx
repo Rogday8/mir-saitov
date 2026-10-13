@@ -247,7 +247,7 @@ const Works: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 30 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1 rounded-full border border-white/15 bg-void/70 p-1.5 text-mist shadow-2xl backdrop-blur-xl"
+            className="fixed bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1 rounded-full border border-white/15 bg-void/90 p-1.5 text-mist shadow-2xl lg:bg-void/70 lg:backdrop-blur-xl"
             aria-label="Работы"
           >
             <button
@@ -258,9 +258,9 @@ const Works: React.FC = () => {
             >
               ←
             </button>
-            <div className="flex min-w-[190px] items-center gap-3 px-2">
+            <div className="flex min-w-[170px] max-w-[60vw] items-center gap-3 px-2">
               <span className="font-mono text-[11px] text-haze">
-                <span style={{ color: cur.accent }}>{String(active + 1).padStart(2, '0')}</span> / {String(WORKS.length).padStart(2, '0')}
+                <span className="text-mist">{String(active + 1).padStart(2, '0')}</span> / {String(WORKS.length).padStart(2, '0')}
               </span>
               <AnimatePresence mode="wait">
                 <motion.span
@@ -269,7 +269,7 @@ const Works: React.FC = () => {
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: -12, opacity: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="font-display text-[13px] font-semibold"
+                  className="truncate whitespace-nowrap font-display text-[13px] font-semibold"
                 >
                   {cur.name}
                 </motion.span>

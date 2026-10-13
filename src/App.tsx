@@ -8,6 +8,8 @@ import Marquee from './components/Marquee';
 import Works from './components/Works';
 import Skills from './components/Skills';
 import Process from './components/Process';
+import Console from './components/Console';
+import Team from './components/Team';
 import BugGame from './components/BugGame';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
@@ -48,6 +50,8 @@ const Main: React.FC = () => {
         <Marquee />
         <Works />
         <Skills />
+        <Console />
+        <Team />
         <Process />
         <BugGame />
         <Contact />

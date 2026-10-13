@@ -8,18 +8,19 @@ export type ChibiMode = 'idle' | 'run' | 'cheer';
 const base = import.meta.env.BASE_URL;
 
 const Chibi: React.FC<{ m: Member; size?: number; mode?: ChibiMode; className?: string; flip?: boolean }> = ({ m, size = 120, mode = 'idle', className = '', flip }) => {
-  const bodyW = size * 0.58;
+  const bodyW = size * 0.56;
   return (
     <div
       className={`chibi chibi-${mode} relative select-none ${className}`}
-      style={{ width: size, height: size * 1.42, transform: flip ? 'scaleX(-1)' : undefined }}
+      style={{ width: size, height: size * 1.48, transform: flip ? 'scaleX(-1)' : undefined }}
       aria-label={m.name}
     >
       {/* тень */}
       <div className="chibi-shadow absolute bottom-0 left-1/2 h-[6%] w-[52%] -translate-x-1/2 rounded-[50%] bg-black/35 blur-[2px]" />
       <div className="chibi-bob absolute inset-0">
         {/* тело */}
-        <svg viewBox="0 0 60 64" className="absolute left-1/2 -translate-x-1/2" style={{ width: bodyW, top: size * 0.74 }} aria-hidden>
+        <svg viewBox="0 0 60 64" className="absolute left-1/2 -translate-x-1/2 overflow-visible" style={{ width: bodyW, top: size * 0.82 }} aria-hidden>
+          <g stroke="rgba(255,255,255,.55)" strokeWidth="1.6" paintOrder="stroke">
           <g className="chibi-leg-l" style={{ transformOrigin: '24px 40px' }}>
             <rect x="20" y="38" width="9" height="20" rx="4.5" fill="#1d1c26" />
             <rect x="17" y="54" width="13" height="7" rx="3.5" fill="#f3f1ff" />
@@ -40,6 +41,7 @@ const Chibi: React.FC<{ m: Member; size?: number; mode?: ChibiMode; className?: 
           {/* значок команды на груди */}
           <circle cx="30" cy="22" r="6.5" fill={m.color} />
           <circle cx="30" cy="22" r="2.6" fill={m.shirt} />
+          </g>
         </svg>
         {/* голова */}
         <img
@@ -47,7 +49,7 @@ const Chibi: React.FC<{ m: Member; size?: number; mode?: ChibiMode; className?: 
           alt=""
           draggable={false}
           className="chibi-head absolute left-1/2 top-0 -translate-x-1/2 drop-shadow-[0_6px_12px_rgba(0,0,0,.35)]"
-          style={{ width: size * 0.92 }}
+          style={{ width: size * 0.8 }}
         />
       </div>
     </div>

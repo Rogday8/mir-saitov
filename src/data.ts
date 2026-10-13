@@ -145,7 +145,7 @@ export interface Member {
   cheer: string; // кричалка на большом экране
 }
 export const TEAM: Member[] = [
-  { id: 'a', name: 'Мистер Пиксель', role: 'Фронтенд и анимации', head: 'team/head-1.webp', color: '#c8ff4d', shirt: '#2b2a3a', cheer: 'Пиксель к пикселю!' },
-  { id: 'b', name: 'Шеф Проекта', role: 'Продюсер и идеи', head: 'team/head-2.webp', color: '#8b6cff', shirt: '#3a5a46', cheer: 'Сроки — святое!' },
-  { id: 'c', name: 'Маэстро 3D', role: 'Дизайн и 3D', head: 'team/head-3.webp', color: '#3ee6ff', shirt: '#151418', cheer: 'Сделаем красиво!' },
+  { id: 'a', name: 'Мистер Пиксель', role: 'Фронтенд и анимации', head: 'team/head-1.webp', color: '#c8ff4d', shirt: '#55761a', cheer: 'Пиксель к пикселю!' },
+  { id: 'b', name: 'Шеф Проекта', role: 'Продюсер и идеи', head: 'team/head-2.webp', color: '#8b6cff', shirt: '#5b43c4', cheer: 'Сроки — святое!' },
+  { id: 'c', name: 'Маэстро 3D', role: 'Дизайн и 3D', head: 'team/head-3.webp', color: '#3ee6ff', shirt: '#137d92', cheer: 'Сделаем красиво!' },
 ];

@@ -6,7 +6,8 @@ import { Magnetic, Scramble } from './ui';
 export const NAV = [
   { id: 'works', label: 'Работы' },
   { id: 'skills', label: 'Возможности' },
-  { id: 'process', label: 'Как работаем' },
+  { id: 'console', label: 'Пульт' },
+  { id: 'team', label: 'Команда' },
   { id: 'game', label: 'Игра' },
   { id: 'contact', label: 'Контакты' },
 ];
@@ -48,7 +49,7 @@ const Header: React.FC = () => {
       <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${solid ? 'py-3' : 'py-5'}`}>
         <div
           className={`mx-3 flex items-center justify-between gap-4 rounded-full px-4 py-2 transition-all duration-500 sm:mx-6 sm:px-5 ${
-            solid ? 'border border-white/10 bg-void/60 backdrop-blur-xl' : 'border border-transparent'
+            solid ? 'border border-white/10 bg-void/90 lg:bg-void/60 lg:backdrop-blur-xl' : 'border border-transparent'
           }`}
         >
           <button onClick={scrollToTop} className="flex items-center gap-2.5" aria-label="Мир сайтов — наверх">
