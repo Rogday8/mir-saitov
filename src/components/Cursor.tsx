@@ -45,6 +45,17 @@ const Cursor: React.FC = () => {
   }, [x, y]);
 
   if (!on) return null;
+  // data-cursor="aim" — тонкий прицел (игра): ничего не закрывает в центре
+  if (label === 'aim')
+    return (
+      <div className="pointer-events-none fixed inset-0 z-[100]" aria-hidden>
+        <motion.svg viewBox="0 0 48 48" className="absolute left-0 top-0 h-12 w-12 text-lime" style={{ x, y, translateX: '-50%', translateY: '-50%' }} animate={{ scale: down ? 0.8 : 1, rotate: down ? 45 : 0 }}>
+          <circle cx="24" cy="24" r="15" fill="none" stroke="currentColor" strokeWidth="1.5" opacity=".9" />
+          <path d="M24 2v12M24 34v12M2 24h12M34 24h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="24" cy="24" r="1.6" fill="currentColor" />
+        </motion.svg>
+      </div>
+    );
   const size = label ? 96 : hover ? 56 : 34;
   return (
     <div className="pointer-events-none fixed inset-0 z-[100]" aria-hidden>

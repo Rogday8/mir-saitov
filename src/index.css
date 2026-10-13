@@ -29,8 +29,9 @@
   body {
     overflow-x: clip;
   }
+  /* фон страницы рисует общий слой .page-bg (перекрашивается под работу на экране) — body прозрачный */
   body {
-    background: var(--color-void);
+    background: transparent;
   }
   ::selection {
     background: var(--color-lime);
@@ -69,17 +70,24 @@ html.lenis body {
   position: fixed;
   inset: -50%;
   z-index: 60;
-  opacity: 0.06;
+  opacity: 0.05;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  animation: grain 1.2s steps(6) infinite;
 }
-@keyframes grain {
-  0% { transform: translate(0, 0); }
-  20% { transform: translate(-3%, 2%); }
-  40% { transform: translate(2%, -4%); }
-  60% { transform: translate(-4%, -1%); }
-  80% { transform: translate(3%, 3%); }
-  100% { transform: translate(0, 0); }
+
+/* общий фон: цвет и свечение задают переменные (Works.tsx), переход плавный и без швов между блоками */
+.page-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--page-bg, #07060c);
+  transition: background-color 1s ease;
+}
+.page-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(50% 45% at 70% 40%, var(--page-glow, transparent), transparent 70%);
+  transition: background 1s ease;
 }
 
 .text-aurora {
@@ -103,10 +111,36 @@ html.lenis body {
 .no-scrollbar { scrollbar-width: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .grain, .text-aurora { animation: none; }
+  .text-aurora { animation: none; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ——— человечки-чиби ——— */
+.chibi-bob { animation: chibi-bob 2.4s ease-in-out infinite; }
+.chibi-head { transform-origin: 50% 85%; animation: chibi-head 2.4s ease-in-out infinite; }
+@keyframes chibi-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3%); } }
+@keyframes chibi-head { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+
+.chibi-run .chibi-bob { animation: chibi-run-bob 0.32s ease-in-out infinite; }
+.chibi-run .chibi-head { animation: chibi-run-head 0.32s ease-in-out infinite; }
+.chibi-run .chibi-leg-l { animation: chibi-leg 0.32s ease-in-out infinite alternate; }
+.chibi-run .chibi-leg-r { animation: chibi-leg 0.32s ease-in-out infinite alternate-reverse; }
+.chibi-run .chibi-arm-l { animation: chibi-arm 0.32s ease-in-out infinite alternate-reverse; }
+.chibi-run .chibi-arm-r { animation: chibi-arm 0.32s ease-in-out infinite alternate; }
+@keyframes chibi-run-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6%); } }
+@keyframes chibi-run-head { 0%, 100% { transform: rotate(6deg); } 50% { transform: rotate(10deg); } }
+@keyframes chibi-leg { from { transform: rotate(-28deg); } to { transform: rotate(28deg); } }
+@keyframes chibi-arm { from { transform: rotate(-40deg); } to { transform: rotate(40deg); } }
+
+.chibi-cheer .chibi-bob { animation: chibi-jump 0.55s cubic-bezier(.3,0,.4,1) infinite; }
+.chibi-cheer .chibi-arm-l { transform: rotate(150deg); animation: chibi-wave 0.55s ease-in-out infinite alternate; }
+.chibi-cheer .chibi-arm-r { transform: rotate(-150deg); animation: chibi-wave-r 0.55s ease-in-out infinite alternate; }
+@keyframes chibi-jump { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-16%); } }
+@keyframes chibi-wave { from { transform: rotate(140deg); } to { transform: rotate(170deg); } }
+@keyframes chibi-wave-r { from { transform: rotate(-140deg); } to { transform: rotate(-170deg); } }
+.chibi-cheer .chibi-shadow { animation: chibi-shadow 0.55s cubic-bezier(.3,0,.4,1) infinite; }
+@keyframes chibi-shadow { 0%, 100% { transform: scale(1); } 45% { transform: scale(.7); opacity: .6; } }

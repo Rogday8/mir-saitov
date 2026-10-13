@@ -17,8 +17,8 @@ export interface Work {
   bg: string;
   accent: string;
   ink: string;
-  /** дополнительный экран (например, Telegram-мини-приложение) */
-  extra?: { src: string; label: string };
+  /** дополнительный экран (например, Telegram-мини-приложение): постер и видео прокрутки */
+  extra?: { src: string; video?: string; label: string };
 }
 
 export const WORKS: Work[] = [
@@ -36,7 +36,7 @@ export const WORKS: Work[] = [
     bg: '#05060a',
     accent: '#2f8bff',
     ink: '#f5f5f7',
-    extra: { src: 'works/apple-favorite-tg.webp', label: 'Мини-приложение в Telegram' },
+    extra: { src: 'works/apple-favorite-tg.webp', video: 'works/apple-favorite-tg-m.mp4', label: 'Мини-приложение в Telegram' },
   },
   {
     slug: 'gerbariy',
@@ -132,3 +132,20 @@ export const CONTACTS = {
   email: '', // например 'hello@example.ru'
   phone: '', // например '+7 900 000-00-00'
 };
+
+// Команда — герои сценической гонки, «стола» и игры. Головы вырезаны из фото: public/team/head-N.webp.
+// Имена и роли поменяйте на настоящие.
+export interface Member {
+  id: string;
+  name: string;
+  role: string;
+  head: string;
+  color: string; // цвет команды в гонке
+  shirt: string; // цвет «худи» человечка
+  cheer: string; // кричалка на большом экране
+}
+export const TEAM: Member[] = [
+  { id: 'a', name: 'Мистер Пиксель', role: 'Фронтенд и анимации', head: 'team/head-1.webp', color: '#c8ff4d', shirt: '#2b2a3a', cheer: 'Пиксель к пикселю!' },
+  { id: 'b', name: 'Шеф Проекта', role: 'Продюсер и идеи', head: 'team/head-2.webp', color: '#8b6cff', shirt: '#3a5a46', cheer: 'Сроки — святое!' },
+  { id: 'c', name: 'Маэстро 3D', role: 'Дизайн и 3D', head: 'team/head-3.webp', color: '#3ee6ff', shirt: '#151418', cheer: 'Сделаем красиво!' },
+];

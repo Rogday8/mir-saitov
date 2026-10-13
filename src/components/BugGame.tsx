@@ -236,7 +236,7 @@ const BugGame: React.FC = () => {
         <div
           ref={area}
           className="relative h-[62vh] max-h-[620px] min-h-[420px] touch-manipulation select-none overflow-hidden"
-          data-cursor={state === 'play' ? 'Лови' : undefined}
+          data-cursor={state === 'play' ? 'aim' : undefined}
         >
           {/* «сайт» под жуками */}
           <div className="pointer-events-none absolute inset-0 p-5 opacity-50 sm:p-8">

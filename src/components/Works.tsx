@@ -8,9 +8,21 @@ import LiveModal from './LiveModal';
 import { Arrow, Eyebrow, Magnetic, SplitReveal } from './ui';
 
 const base = import.meta.env.BASE_URL;
+
+// На телефоне в окне браузера видео не играет (только в телефонах-макетах) — меньше нагрузка
+function useIsDesktop() {
+  const [d, setD] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
+  useEffect(() => {
+    const m = window.matchMedia('(min-width: 1024px)');
+    const on = () => setD(m.matches);
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  }, []);
+  return d;
+}
 const media = (slug: string, suffix = '') => `${base}works/${slug}${suffix}`;
 
-const Scene: React.FC<{ w: Work; i: number; onLive: (w: Work) => void }> = ({ w, i, onLive }) => {
+const Scene: React.FC<{ w: Work; i: number; onLive: (w: Work) => void; desktop: boolean }> = ({ w, i, onLive, desktop }) => {
   const ref = useRef<HTMLElement>(null);
   const p = useSectionProgress(ref);
   const phoneY = useTransform(p, [0, 1], [140, -140]);
@@ -106,7 +118,7 @@ const Scene: React.FC<{ w: Work; i: number; onLive: (w: Work) => void }> = ({ w,
         </div>
 
         {/* устройства */}
-        <div className={`relative order-1 mb-14 mt-10 sm:mb-16 lg:col-span-7 lg:my-0 ${flip ? 'lg:order-1' : 'lg:order-2'}`}>
+        <div className={`relative order-1 mt-6 lg:col-span-7 lg:my-0 ${flip ? 'lg:order-1' : 'lg:order-2'}`}>
           <motion.div
             initial={{ opacity: 0, y: 80, rotate: flip ? -2 : 2 }}
             whileInView={{ opacity: 1, y: 0, rotate: 0 }}
@@ -120,16 +132,36 @@ const Scene: React.FC<{ w: Work; i: number; onLive: (w: Work) => void }> = ({ w,
               accent={w.accent}
               label={w.name}
               onOpen={w.embed ? () => onLive(w) : () => window.open(w.url, '_blank', 'noopener')}
+              play={desktop}
             />
           </motion.div>
-          <motion.div style={{ y: phoneY }} className={`absolute -bottom-16 w-[28%] max-w-[210px] sm:-bottom-20 ${flip ? '-right-2 sm:-right-6' : '-left-2 sm:-left-8'}`}>
-            <PhoneFrame src={media(w.slug, '-mobile.webp')} alt={`${w.name} на телефоне`} />
+          {/* компьютер: телефоны лежат поверх окна и плывут при прокрутке */}
+          <motion.div style={{ y: phoneY }} className={`absolute -bottom-20 hidden w-[28%] max-w-[210px] lg:block ${flip ? '-right-6' : '-left-8'}`}>
+            <PhoneFrame src={media(w.slug, '-mobile.webp')} video={desktop ? media(w.slug, '-m.mp4') : undefined} alt={`${w.name} на телефоне`} />
           </motion.div>
           {w.extra && (
-            <motion.div style={{ y: extraY }} className={`absolute -top-14 w-[24%] max-w-[180px] ${flip ? '-left-4' : '-right-3 sm:-right-8'}`}>
-              <PhoneFrame src={`${base}${w.extra.src}`} alt={w.extra.label} label={w.extra.label} />
+            <motion.div style={{ y: extraY }} className={`absolute -top-14 hidden w-[24%] max-w-[180px] lg:block ${flip ? '-left-4' : '-right-8'}`}>
+              <PhoneFrame src={`${base}${w.extra.src}`} video={desktop && w.extra.video ? `${base}${w.extra.video}` : undefined} alt={w.extra.label} label={w.extra.label} />
             </motion.div>
           )}
+          {/* телефон: макеты рядом под окном, крупно, с видео */}
+          <div className="-mt-10 flex items-start justify-center gap-4 px-2 lg:hidden">
+            <PhoneFrame
+              className="w-[44%] max-w-[200px]"
+              src={media(w.slug, '-mobile.webp')}
+              video={!desktop ? media(w.slug, '-m.mp4') : undefined}
+              alt={`${w.name} на телефоне`}
+            />
+            {w.extra && (
+              <PhoneFrame
+                className="mt-8 w-[44%] max-w-[200px]"
+                src={`${base}${w.extra.src}`}
+                video={!desktop && w.extra.video ? `${base}${w.extra.video}` : undefined}
+                alt={w.extra.label}
+                label="Telegram"
+              />
+            )}
+          </div>
         </div>
       </div>
     </article>
@@ -166,18 +198,29 @@ const Works: React.FC = () => {
     };
   }, []);
 
+  // «Открыть работу» с планеты сайтов: промо-сайт — сразу вживую, магазин — прокрутить к его сцене
+  useEffect(() => {
+    const on = (e: Event) => {
+      const w = WORKS.find((x) => x.slug === (e as CustomEvent<string>).detail);
+      if (!w) return;
+      if (w.embed) setLive(w);
+      else scrollToId(`work-${w.slug}`);
+    };
+    window.addEventListener('mir:open-work', on);
+    return () => window.removeEventListener('mir:open-work', on);
+  }, []);
+
   const cur = active >= 0 ? WORKS[active] : null;
+  // фон всей страницы (слой .page-bg) перекрашивается в цвета работы на экране — без швов между блоками
+  useEffect(() => {
+    const root = document.documentElement.style;
+    root.setProperty('--page-bg', cur ? cur.bg : '#07060c');
+    root.setProperty('--page-glow', cur ? `${cur.accent}2e` : 'transparent');
+  }, [cur]);
+  const isDesktop = useIsDesktop();
 
   return (
     <section id="works" ref={section} className="relative">
-      {/* фон перекрашивается в цвета работы, которая сейчас на экране */}
-      <div className="pointer-events-none sticky top-0 -mb-[100svh] h-[100svh] transition-[background-color] duration-[900ms] ease-out" style={{ backgroundColor: cur ? cur.bg : '#07060c' }}>
-        <div
-          className="absolute inset-0 opacity-60 transition-opacity duration-700"
-          style={{ background: cur ? `radial-gradient(50% 45% at 70% 40%, ${cur.accent}26, transparent 70%)` : 'none' }}
-        />
-      </div>
-
       <div className="relative mx-auto max-w-[1500px] px-5 pb-10 pt-28 sm:px-10 sm:pt-40">
         <Eyebrow n="01">Работы</Eyebrow>
         <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
@@ -193,7 +236,7 @@ const Works: React.FC = () => {
       </div>
 
       {WORKS.map((w, i) => (
-        <Scene key={w.slug} w={w} i={i} onLive={setLive} />
+        <Scene key={w.slug} w={w} i={i} onLive={setLive} desktop={isDesktop} />
       ))}
 
       {/* плашка-навигатор по работам внизу экрана */}

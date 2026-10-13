@@ -4,14 +4,32 @@ import { finePointer, reducedMotion } from '../lib/smooth';
 
 const host = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
+// Видео играет только пока его видно (и не играет, если человек попросил «меньше движения»)
+function useAutoplay(ref: React.RefObject<HTMLVideoElement | null>, enabled = true) {
+  useEffect(() => {
+    const v = ref.current;
+    if (!v || !enabled) return;
+    const io = new IntersectionObserver(
+      (e) => {
+        if (e[0].isIntersecting && !reducedMotion()) v.play().catch(() => {});
+        else v.pause();
+      },
+      { threshold: 0.2 },
+    );
+    io.observe(v);
+    return () => io.disconnect();
+  }, [ref, enabled]);
+}
+
 // Окно браузера: видео прокрутки сайта, играет только когда видно. Наклоняется за курсором.
-export const BrowserFrame: React.FC<{ url: string; video: string; poster: string; accent: string; onOpen?: () => void; label: string }> = ({
+export const BrowserFrame: React.FC<{ url: string; video: string; poster: string; accent: string; onOpen?: () => void; label: string; play?: boolean }> = ({
   url,
   video,
   poster,
   accent,
   onOpen,
   label,
+  play = true,
 }) => {
   const box = useRef<HTMLDivElement>(null);
   const vid = useRef<HTMLVideoElement>(null);
@@ -20,19 +38,7 @@ export const BrowserFrame: React.FC<{ url: string; video: string; poster: string
   const glareX = useTransform(ry, [-10, 10], ['0%', '100%']);
   const glare = useTransform(glareX, (x) => `radial-gradient(60% 80% at ${x} 0%, rgba(255,255,255,.16), transparent 60%)`);
 
-  useEffect(() => {
-    const v = vid.current;
-    if (!v) return;
-    const io = new IntersectionObserver(
-      (e) => {
-        if (e[0].isIntersecting && !reducedMotion()) v.play().catch(() => {});
-        else v.pause();
-      },
-      { threshold: 0.25 },
-    );
-    io.observe(v);
-    return () => io.disconnect();
-  }, []);
+  useAutoplay(vid, play);
 
   const move = (e: React.PointerEvent) => {
     if (!finePointer() || !box.current) return;
@@ -75,7 +81,7 @@ export const BrowserFrame: React.FC<{ url: string; video: string; poster: string
           <video
             ref={vid}
             className="h-full w-full object-cover"
-            src={video}
+            src={play ? video : undefined}
             poster={poster}
             muted
             loop
@@ -98,17 +104,25 @@ export const BrowserFrame: React.FC<{ url: string; video: string; poster: string
   );
 };
 
-// Телефон со скриншотом
-export const PhoneFrame: React.FC<{ src: string; alt: string; className?: string; label?: string }> = ({ src, alt, className = '', label }) => (
-  <div className={`relative ${className}`}>
-    <div className="relative overflow-hidden rounded-[30px] border-[5px] border-[#1d1c26] bg-black shadow-[0_30px_80px_-20px_rgba(0,0,0,.8)] ring-1 ring-white/15 sm:rounded-[36px] sm:border-[6px]">
-      <div className="absolute left-1/2 top-2 z-10 h-[14px] w-[34%] -translate-x-1/2 rounded-full bg-black" />
-      <img src={src} alt={alt} loading="lazy" className="block aspect-[390/844] w-full object-cover object-top" draggable={false} />
-    </div>
-    {label && (
-      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-void/85 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-mist backdrop-blur">
-        {label}
+// Телефон: видео прокрутки (если есть) или скриншот
+export const PhoneFrame: React.FC<{ src: string; video?: string; alt: string; className?: string; label?: string }> = ({ src, video, alt, className = '', label }) => {
+  const vid = useRef<HTMLVideoElement>(null);
+  useAutoplay(vid, !!video);
+  return (
+    <div className={`relative ${className}`}>
+      <div className="relative overflow-hidden rounded-[30px] border-[5px] border-[#1d1c26] bg-black shadow-[0_30px_80px_-20px_rgba(0,0,0,.8)] ring-1 ring-white/15 sm:rounded-[36px] sm:border-[6px]">
+        <div className="absolute left-1/2 top-2 z-10 h-[14px] w-[34%] -translate-x-1/2 rounded-full bg-black" />
+        {video ? (
+          <video ref={vid} src={video} poster={src} muted loop playsInline preload="none" aria-label={alt} className="block aspect-[390/844] w-full object-cover object-top" />
+        ) : (
+          <img src={src} alt={alt} loading="lazy" className="block aspect-[390/844] w-full object-cover object-top" draggable={false} />
+        )}
       </div>
-    )}
-  </div>
-);
+      {label && (
+        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-void/85 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-mist">
+          {label}
+        </div>
+      )}
+    </div>
+  );
+};

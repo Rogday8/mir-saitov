@@ -7,7 +7,7 @@ const Row: React.FC<{ items: string[]; base: number; className?: string }> = ({ 
   const x = useMotionValue(0);
   const { scrollY } = useScroll();
   const vel = useSpring(useVelocity(scrollY), { damping: 50, stiffness: 400 });
-  const factor = useTransform(vel, [-1500, 0, 1500], [-4, 0, 4], { clamp: false });
+  const factor = useTransform(vel, [-2000, 0, 2000], [-1.6, 0, 1.6], { clamp: true });
   const dir = useRef(1);
   const tx = useTransform(x, (v) => `${wrap(-50, 0, v)}%`);
   useAnimationFrame((_, delta) => {
@@ -38,10 +38,10 @@ const Row: React.FC<{ items: string[]; base: number; className?: string }> = ({ 
 const Marquee: React.FC = () => (
   <section className="relative z-10 -my-6 overflow-hidden py-16" aria-label="Что делаем">
     <div className="-rotate-[3deg] scale-105 bg-lime py-4 font-display text-[7vw] font-semibold uppercase leading-none tracking-tight text-void sm:text-[4.2vw]">
-      <Row items={SERVICES} base={-3} />
+      <Row items={SERVICES} base={-1.1} />
     </div>
-    <div className="mt-[-1.2vw] rotate-[2deg] scale-105 border-y border-white/10 bg-night/90 py-3 font-display text-[5vw] font-light uppercase leading-none tracking-tight text-mist backdrop-blur sm:text-[2.6vw]">
-      <Row items={[...SERVICES].reverse()} base={2.2} className="text-outline" />
+    <div className="mt-[-1.2vw] rotate-[2deg] scale-105 border-y border-white/10 bg-night py-3 font-display text-[5vw] font-light uppercase leading-none tracking-tight text-mist sm:text-[2.6vw]">
+      <Row items={[...SERVICES].reverse()} base={0.8} className="text-outline" />
     </div>
   </section>
 );
