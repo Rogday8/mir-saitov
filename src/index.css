@@ -74,20 +74,20 @@ html.lenis body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* общий фон: цвет и свечение задают переменные (Works.tsx), переход плавный и без швов между блоками */
+/* общий фон: цвет и свечение задаёт Works.tsx, переход плавный и без швов между блоками */
 .page-bg {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background-color: var(--page-bg, #07060c);
+  background-color: #07060c;
   transition: background-color 1s ease;
 }
-.page-bg::after {
-  content: '';
+/* свечение — отдельным слоем; цвет ставит Works.tsx прямо в style (не через переменную на :root —
+   смена переменной на корне пересчитывает стили всей страницы и даёт подвисание ~60 мс) */
+.page-bg > i {
   position: absolute;
   inset: 0;
-  background: radial-gradient(50% 45% at 70% 40%, var(--page-glow, transparent), transparent 70%);
-  transition: background 1s ease;
+  transition: opacity 0.8s ease;
 }
 
 .text-aurora {

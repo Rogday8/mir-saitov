@@ -25,7 +25,9 @@ const App: React.FC = () => {
   if (route.page === 'stage' || route.page === 'play')
     return (
       <Suspense fallback={<div className="grid h-[100svh] place-items-center font-mono text-xs uppercase tracking-[0.3em] text-haze">Загрузка…</div>}>
-        <div className="page-bg" aria-hidden />
+        <div id="page-bg" className="page-bg" aria-hidden>
+        <i />
+      </div>
         {route.page === 'stage' ? <Stage /> : <Play params={route.params} />}
       </Suspense>
     );
@@ -40,7 +42,9 @@ const Main: React.FC = () => {
 
   return (
     <>
-      <div className="page-bg" aria-hidden />
+      <div id="page-bg" className="page-bg" aria-hidden>
+        <i />
+      </div>
       <Loader onDone={() => setReady(true)} />
       <Cursor />
       <motion.div className="fixed inset-x-0 top-0 z-[70] h-[2px] origin-left bg-gradient-to-r from-violet via-cyan to-lime" style={{ scaleX: bar }} />

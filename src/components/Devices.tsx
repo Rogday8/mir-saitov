@@ -9,6 +9,16 @@ function useAutoplay(ref: React.RefObject<HTMLVideoElement | null>, enabled = tr
   useEffect(() => {
     const v = ref.current;
     if (!v || !enabled) return;
+    // заранее (за ~экран до появления) начинаем подгружать — старт видео не дёргает прокрутку
+    const near = new IntersectionObserver(
+      (e) => {
+        if (e[0].isIntersecting && v.preload !== 'auto') {
+          v.preload = 'auto';
+          v.load();
+        }
+      },
+      { rootMargin: '100% 0px' },
+    );
     const io = new IntersectionObserver(
       (e) => {
         if (e[0].isIntersecting && !reducedMotion()) v.play().catch(() => {});
@@ -16,8 +26,12 @@ function useAutoplay(ref: React.RefObject<HTMLVideoElement | null>, enabled = tr
       },
       { threshold: 0.2 },
     );
+    near.observe(v);
     io.observe(v);
-    return () => io.disconnect();
+    return () => {
+      near.disconnect();
+      io.disconnect();
+    };
   }, [ref, enabled]);
 }
 

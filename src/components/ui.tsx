@@ -56,7 +56,7 @@ export const SplitReveal: React.FC<{ text: string; className?: string; delay?: n
             return (
               <span key={i} className="inline-block overflow-hidden align-bottom pb-[0.08em] -mb-[0.08em]">
                 <motion.span
-                  className="inline-block will-change-transform"
+                  className="inline-block"
                   style={aurora ? auroraLetter(i - 1, total) : undefined}
                   variants={{ hide: { y: '110%', rotate: 8 }, show: { y: '0%', rotate: 0, transition: { duration: 0.9, delay: d, ease: [0.16, 1, 0.3, 1] } } }}
                 >

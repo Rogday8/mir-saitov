@@ -22,7 +22,8 @@ function useIsDesktop() {
 }
 const media = (slug: string, suffix = '') => `${base}works/${slug}${suffix}`;
 
-const Scene: React.FC<{ w: Work; i: number; onLive: (w: Work) => void; desktop: boolean }> = ({ w, i, onLive, desktop }) => {
+// memo: при смене активной работы сцены не перерисовываются (иначе на границах работ подвисание ~70 мс)
+const Scene = React.memo(function Scene({ w, i, onLive, desktop }: { w: Work; i: number; onLive: (w: Work) => void; desktop: boolean }) {
   const ref = useRef<HTMLElement>(null);
   const p = useSectionProgress(ref);
   const phoneY = useTransform(p, [0, 1], [140, -140]);
@@ -166,7 +167,25 @@ const Scene: React.FC<{ w: Work; i: number; onLive: (w: Work) => void; desktop: 
       </div>
     </article>
   );
-};
+});
+
+const WorksHead = React.memo(function WorksHead() {
+  return (
+      <div className="relative mx-auto max-w-[1500px] px-5 pb-10 pt-28 sm:px-10 sm:pt-40">
+        <Eyebrow n="01">Работы</Eyebrow>
+        <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <h2 className="font-display text-[14vw] font-semibold leading-[0.88] tracking-[-0.04em] sm:text-[10vw] lg:text-[7.5vw]">
+            <SplitReveal text="Галактика" />
+            <br />
+            <SplitReveal text="проектов" delay={0.2} aurora />
+          </h2>
+          <p className="max-w-sm text-[15px] leading-relaxed text-haze sm:text-[17px]">
+            Каждый сайт — свой мир со своим характером. Листайте: страница перекрасится под каждый из них, а промо-сайты можно открыть вживую прямо здесь.
+          </p>
+        </div>
+      </div>
+  );
+});
 
 const Works: React.FC = () => {
   const [active, setActive] = useState(-1);
@@ -213,27 +232,20 @@ const Works: React.FC = () => {
   const cur = active >= 0 ? WORKS[active] : null;
   // фон всей страницы (слой .page-bg) перекрашивается в цвета работы на экране — без швов между блоками
   useEffect(() => {
-    const root = document.documentElement.style;
-    root.setProperty('--page-bg', cur ? cur.bg : '#07060c');
-    root.setProperty('--page-glow', cur ? `${cur.accent}2e` : 'transparent');
+    const bg = document.getElementById('page-bg');
+    if (!bg) return;
+    bg.style.backgroundColor = cur ? cur.bg : '#07060c';
+    const glow = bg.firstElementChild as HTMLElement | null;
+    if (glow) {
+      glow.style.opacity = cur ? '1' : '0';
+      if (cur) glow.style.background = `radial-gradient(50% 45% at 70% 40%, ${cur.accent}2e, transparent 70%)`;
+    }
   }, [cur]);
   const isDesktop = useIsDesktop();
 
   return (
     <section id="works" ref={section} className="relative">
-      <div className="relative mx-auto max-w-[1500px] px-5 pb-10 pt-28 sm:px-10 sm:pt-40">
-        <Eyebrow n="01">Работы</Eyebrow>
-        <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <h2 className="font-display text-[14vw] font-semibold leading-[0.88] tracking-[-0.04em] sm:text-[10vw] lg:text-[7.5vw]">
-            <SplitReveal text="Галактика" />
-            <br />
-            <SplitReveal text="проектов" delay={0.2} aurora />
-          </h2>
-          <p className="max-w-sm text-[15px] leading-relaxed text-haze sm:text-[17px]">
-            Каждый сайт — свой мир со своим характером. Листайте: страница перекрасится под каждый из них, а промо-сайты можно открыть вживую прямо здесь.
-          </p>
-        </div>
-      </div>
+      <WorksHead />
 
       {WORKS.map((w, i) => (
         <Scene key={w.slug} w={w} i={i} onLive={setLive} desktop={isDesktop} />

@@ -286,13 +286,17 @@ const AdminDemo: React.FC = () => {
 const WIDTHS = [300, 200, 112];
 const ResponsiveDemo: React.FC = () => {
   const [k, setK] = useState(0);
+  const box = useRef<HTMLDivElement>(null);
+  const inView = useInView(box);
   useEffect(() => {
+    if (!inView) return; // за экраном не перестраиваемся (каждая смена — пересчёт раскладки)
     const t = setInterval(() => setK((v) => (v + 1) % WIDTHS.length), 1800);
     return () => clearInterval(t);
-  }, []);
+  }, [inView]);
   const narrow = k === 2;
   return (
     <motion.div
+      ref={box}
       className="rounded-2xl border-2 border-white/20 bg-white/[0.03] p-2.5"
       animate={{ width: WIDTHS[k] }}
       transition={{ type: 'spring', stiffness: 120, damping: 18 }}
