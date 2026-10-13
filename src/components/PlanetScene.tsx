@@ -259,6 +259,7 @@ const CameraFit: React.FC = () => {
 // Планета наклоняется за курсором и отъезжает при прокрутке
 const Rig: React.FC<{ children: React.ReactNode; scroll: React.MutableRefObject<number>; offsetX: number; offsetY: number }> = ({ children, scroll, offsetX, offsetY }) => {
   const g = useRef<THREE.Group>(null);
+  const intro = useRef(0);
   const { pointer } = useThree();
   useFrame((_, dt) => {
     const el = g.current;
@@ -266,6 +267,10 @@ const Rig: React.FC<{ children: React.ReactNode; scroll: React.MutableRefObject<
     const k = Math.min(1, dt * 3);
     el.rotation.x += (pointer.y * 0.18 - el.rotation.x) * k;
     el.rotation.y += (pointer.x * 0.3 - el.rotation.y) * k;
+    // появление: планета «наплывает» из глубины
+    intro.current = Math.min(1, intro.current + dt / 2.2);
+    const e = 1 - Math.pow(1 - intro.current, 3);
+    el.scale.setScalar(0.72 + e * 0.28);
     const s = scroll.current;
     el.position.y = offsetY + s * 1.6;
     el.position.x = offsetX;

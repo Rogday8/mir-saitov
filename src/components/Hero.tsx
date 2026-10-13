@@ -59,7 +59,8 @@ const Hero: React.FC<{ ready: boolean }> = ({ ready }) => {
       <div data-planet className="absolute inset-0 max-lg:top-[-6%]">
         {gl ? (
           <Suspense fallback={null}>
-            <motion.div className="h-full w-full" initial={{ opacity: 0, scale: 0.9 }} animate={ready ? { opacity: 1, scale: 1 } : {}} transition={{ duration: 2, ease: [0.16, 1, 0.3, 1] }}>
+            {/* без scale: холст меряет размер родителя с учётом transform и остался бы на 90% ширины */}
+            <motion.div className="h-full w-full" initial={{ opacity: 0 }} animate={ready ? { opacity: 1 } : {}} transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}>
               <PlanetScene onPick={pick} scroll={scroll} active={active} compact={compact} />
             </motion.div>
           </Suspense>
