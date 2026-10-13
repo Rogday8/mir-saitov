@@ -182,7 +182,7 @@ const Hero: React.FC<{ ready: boolean }> = ({ ready }) => {
             transition={{ delay: 0.75, duration: 1, ease: [0.16, 1, 0.3, 1] }}
           >
             Создаём сайты, от которых не хочется уходить: магазины с админкой, промо-сайты с 3D и анимацией, мини-приложения в Telegram.{' '}
-            <span className="text-mist">На орбите — {WORKS.length} наших работ, наведите на любую.</span>
+            <span className="text-mist">Нажмите на Землю — внутри {WORKS.length} наших работ на орбите Сатурна.</span>
           </motion.p>
           <motion.div
             className="pointer-events-auto flex flex-wrap items-center gap-3"
