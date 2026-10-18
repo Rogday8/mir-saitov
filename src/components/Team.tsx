@@ -6,12 +6,8 @@ import RunnerGame from './RunnerGame';
 import { Eyebrow, SplitReveal } from './ui';
 
 // «Стол команды»: всё, что на нём лежит, можно таскать. Клик по человечку — прыгает и выкрикивает девиз.
-const NOTES = [
-  { t: 'Дедлайн? Успеем 😎', c: '#c8ff4d', r: -6 },
-  { t: 'Кофе ×3 ☕', c: '#ffd66b', r: 5 },
-  { t: 'Пиксель к пикселю', c: '#ff9ccf', r: -3 },
-  { t: 'Баги — не пройдут', c: '#9be7ff', r: 7 },
-];
+// инструменты, с которыми работаем — плашки на столе (их тоже можно двигать)
+const TOOLS = ['React', 'Three.js', 'Node.js', 'PostgreSQL', 'Figma', 'Telegram API'];
 
 const Person: React.FC<{ m: Member; desk: React.RefObject<HTMLDivElement | null>; start: { x: string; y: string }; size: number; active: boolean }> = ({
   m,
@@ -154,9 +150,7 @@ const Team: React.FC = () => {
             <SplitReveal text="Кто делает" /> <SplitReveal text="эти миры" delay={0.2} aurora />
           </h2>
         </div>
-        <p className="max-w-sm font-[Caveat,cursive] text-[15px] text-haze sm:text-[17px]">
-          ← всё на этом столе можно двигать. Мы тут гуляем — поймайте любого и нажмите, узнаете девиз →
-        </p>
+        <p className="max-w-sm text-[15px] leading-relaxed text-haze">Всё на этом столе можно передвигать. Нажмите на любого из нас — узнаете девиз.</p>
       </div>
 
       <div
@@ -167,18 +161,18 @@ const Team: React.FC = () => {
         {TEAM.map((m, i) => (
           <Person key={m.id} m={m} desk={desk} start={spots[i]} size={small ? 82 : 118} active={deskInView} />
         ))}
-        {NOTES.map((n, i) => (
+        {TOOLS.map((t, i) => (
           <motion.div
-            key={n.t}
+            key={t}
             drag
             dragConstraints={desk}
             dragElastic={0.2}
-            whileDrag={{ scale: 1.1, rotate: 0, zIndex: 30 }}
-            initial={{ rotate: n.r }}
-            className="absolute z-[5] w-36 cursor-grab touch-none rounded-sm p-3 font-display text-[14px] font-semibold leading-snug text-void shadow-[0_12px_30px_rgba(0,0,0,.35)] active:cursor-grabbing"
-            style={{ background: n.c, left: `${small ? [4, 50, 8, 52][i] : [6, 30, 58, 80][i]}%`, top: `${small ? [62, 66, 80, 82][i] : [64, 70, 66, 58][i]}%` }}
+            whileDrag={{ scale: 1.06, zIndex: 30 }}
+            className="absolute z-[5] flex cursor-grab touch-none items-center gap-2 rounded-full border border-white/15 bg-[#14121f] px-4 py-2.5 font-mono text-[12px] text-mist shadow-[0_10px_24px_rgba(0,0,0,.35)] active:cursor-grabbing"
+            style={{ left: `${small ? [4, 52, 4, 52, 4, 52][i] : [6, 22, 40, 58, 74, 84][i]}%`, top: `${small ? [66, 66, 76, 76, 86, 86][i] : [78, 70, 80, 72, 82, 66][i]}%` }}
           >
-            {n.t}
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: ['#c8ff4d', '#3ee6ff', '#8b6cff', '#c8ff4d', '#3ee6ff', '#8b6cff'][i] }} />
+            {t}
           </motion.div>
         ))}
       </div>

@@ -139,3 +139,57 @@ html.lenis body {
 @keyframes chibi-wave-r { from { transform: rotate(-140deg); } to { transform: rotate(-170deg); } }
 .chibi-cheer .chibi-shadow { animation: chibi-shadow 0.55s cubic-bezier(.3,0,.4,1) infinite; }
 @keyframes chibi-shadow { 0%, 100% { transform: scale(1); } 45% { transform: scale(.7); opacity: .6; } }
+
+/* ——— «Защита»: эффекты атаки на демо-сайт ——— */
+.sec-corrupt {
+  animation: sec-shake 0.18s steps(2) infinite;
+  filter: saturate(1.6) hue-rotate(-18deg) contrast(1.15);
+}
+@keyframes sec-shake {
+  0% { transform: translate(0, 0); clip-path: inset(0 0 0 0); }
+  25% { transform: translate(-3px, 1px); clip-path: inset(12% 0 60% 0); }
+  50% { transform: translate(4px, -1px); clip-path: inset(0 0 0 0); }
+  75% { transform: translate(-2px, 2px); clip-path: inset(48% 0 22% 0); }
+  100% { transform: translate(0, 0); clip-path: inset(0 0 0 0); }
+}
+.sec-scan {
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 40, 60, 0.07) 0 2px, transparent 2px 4px),
+    linear-gradient(180deg, rgba(255, 30, 60, 0.12), transparent 40%, rgba(255, 30, 60, 0.16));
+  animation: sec-flicker 0.12s steps(2) infinite;
+}
+@keyframes sec-flicker {
+  0% { opacity: 0.8; }
+  100% { opacity: 1; }
+}
+.sec-glitch {
+  position: relative;
+}
+.sec-glitch::before,
+.sec-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.sec-glitch::before {
+  color: #3ee6ff;
+  transform: translate(-2px, 0);
+  clip-path: inset(0 0 55% 0);
+  opacity: 0;
+  animation: sec-split 1.6s steps(1) infinite;
+}
+.sec-glitch::after {
+  color: #ff2d55;
+  transform: translate(2px, 0);
+  clip-path: inset(55% 0 0 0);
+  opacity: 0;
+  animation: sec-split 1.6s steps(1) infinite reverse;
+}
+/* цветные копии видны только во время коротких сбоев */
+@keyframes sec-split {
+  0%, 82%, 94%, 100% { transform: translate(0, 0); opacity: 0; }
+  84% { transform: translate(-4px, 1px); opacity: 0.8; }
+  88% { transform: translate(3px, -1px); opacity: 0.8; }
+  92% { transform: translate(-1px, 0); opacity: 0.6; }
+}

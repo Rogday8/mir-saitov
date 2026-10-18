@@ -135,7 +135,7 @@ const Console: React.FC = () => {
       (async () => {
         setTyping(true);
         await typeLine(`› ${q}`, 'ask');
-        await typeLine('◇ Такое на живом проекте сделаем — а здесь пока умею только кнопки выше 🙂', 'info');
+        await typeLine('◇ Такое сделаем на живом проекте. Здесь — только команды выше.', 'info');
         setTyping(false);
       })();
     }

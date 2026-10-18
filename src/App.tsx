@@ -10,7 +10,7 @@ import Skills from './components/Skills';
 import Process from './components/Process';
 import Console from './components/Console';
 import Team from './components/Team';
-import BugGame from './components/BugGame';
+import Security from './components/Security';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import { startSmooth } from './lib/smooth';
@@ -57,7 +57,7 @@ const Main: React.FC = () => {
         <Console />
         <Team />
         <Process />
-        <BugGame />
+        <Security />
         <Contact />
       </main>
       <Footer />

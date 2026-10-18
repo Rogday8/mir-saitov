@@ -84,7 +84,7 @@ const Contact: React.FC = () => {
 
   return (
     <section id="contact" className="relative overflow-hidden py-28 sm:py-40" onPointerMove={move}>
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[70%] bg-[radial-gradient(50%_60%_at_50%_0%,rgba(139,108,255,.25),transparent_70%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[80%] bg-[radial-gradient(45%_40%_at_50%_45%,rgba(139,108,255,.2),transparent_75%)]" />
       <div className="relative mx-auto max-w-[1500px] px-5 sm:px-10">
         <Eyebrow n="07">Контакты</Eyebrow>
         <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">

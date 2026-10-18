@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import confetti from 'canvas-confetti';
 import { PERKS, PROMOS, TEAM, type Member } from '../data';
 import Chibi from './Chibi';
 
-// «Убеги от дедлайна»: наш человечек бежит по ночному городу, прыгает через жуков и стопки ТЗ,
+// «Убеги от дедлайна»: наш человечек бежит по ночному городу, прыгает через ошибки и стопки ТЗ,
 // пробегает под летящими дедлайнами, ловит кофе и звёзды. Очки → скидки, рекорды — в этом браузере.
 type Kind = 'bug' | 'task' | 'deadline' | 'coffee' | 'star';
 interface Obj {
@@ -18,7 +17,7 @@ interface Obj {
 }
 
 const SIZES: Record<Kind, { w: number; h: number; y: number }> = {
-  bug: { w: 40, h: 32, y: 0 },
+  bug: { w: 38, h: 34, y: 0 },
   task: { w: 46, h: 66, y: 0 },
   deadline: { w: 92, h: 40, y: 150 }, // выше головы: стоя пробегаешь под ним, в прыжке — врезаешься
   coffee: { w: 34, h: 34, y: 140 },
@@ -41,20 +40,26 @@ const readTop = (): Rec[] => {
   }
 };
 
+const CoffeeIcon: React.FC<{ className?: string }> = ({ className = '' }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z" />
+    <path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16M8 3.5c0 1.5 1.2 1.5 1.2 3M11.5 3.5c0 1.5 1.2 1.5 1.2 3" />
+  </svg>
+);
+
+// препятствия и бонусы — плоские значки в одном стиле
 const ObjView: React.FC<{ kind: Kind }> = ({ kind }) => {
   if (kind === 'bug')
     return (
-      <svg viewBox="0 0 40 32" className="h-full w-full drop-shadow-[0_0_8px_rgba(255,95,174,.7)]" aria-hidden>
-        <ellipse cx="20" cy="19" rx="13" ry="11" fill="#ff5fae" />
-        <circle cx="20" cy="8" r="5" fill="#2a1630" stroke="#ff5fae" />
-        <path d="M8 14 2 10M8 20H1M9 26l-6 4M32 14l6-4M32 20h7M31 26l6 4" stroke="#ece9ff" strokeWidth="2" strokeLinecap="round" />
-      </svg>
+      <div className="grid h-full w-full place-items-center rounded-[8px] border border-[#ff5f57]/80 bg-[#2a0d14] font-mono text-[10px] font-bold tracking-wider text-[#ff8a84] shadow-[0_0_14px_rgba(255,95,87,.35)]">
+        ERR
+      </div>
     );
   if (kind === 'task')
     return (
       <div className="flex h-full w-full flex-col justify-end gap-[3px]">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="grid flex-1 place-items-center rounded-[4px] border border-white/40 bg-[#8b6cff] font-mono text-[9px] font-bold text-white" style={{ marginLeft: i % 2 ? 3 : 0 }}>
+          <div key={i} className="grid flex-1 place-items-center rounded-[4px] border border-white/30 bg-[#5d48c9] font-mono text-[9px] font-bold text-white/90" style={{ marginLeft: i % 2 ? 3 : 0 }}>
             ТЗ
           </div>
         ))}
@@ -62,11 +67,27 @@ const ObjView: React.FC<{ kind: Kind }> = ({ kind }) => {
     );
   if (kind === 'deadline')
     return (
-      <div className="flex h-full w-full items-center justify-center gap-1 rounded-full border-2 border-[#ff5f57] bg-[#2a0d14] px-2 font-display text-[12px] font-bold uppercase text-[#ff8a84] shadow-[0_0_20px_rgba(255,95,87,.6)]">
-        ⏰ дедлайн
+      <div className="flex h-full w-full items-center justify-center gap-1.5 rounded-full border border-[#ff5f57]/80 bg-[#2a0d14] px-3 font-mono text-[11px] font-bold uppercase tracking-wider text-[#ff8a84]">
+        <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+          <circle cx="12" cy="13" r="8" />
+          <path d="M12 9v4l2.5 2M9 2h6" />
+        </svg>
+        дедлайн
       </div>
     );
-  return <div className="grid h-full w-full place-items-center text-[26px] drop-shadow-[0_0_10px_rgba(255,214,107,.9)]">{kind === 'coffee' ? '☕' : '⭐'}</div>;
+  if (kind === 'coffee')
+    return (
+      <div className="grid h-full w-full place-items-center rounded-full border border-[#ffd66b]/70 bg-[#2a2210] text-[#ffd66b] shadow-[0_0_14px_rgba(255,214,107,.35)]">
+        <CoffeeIcon className="h-5 w-5" />
+      </div>
+    );
+  return (
+    <div className="grid h-full w-full place-items-center rounded-full border border-lime/70 bg-[#1b2a08] text-lime shadow-[0_0_14px_rgba(200,255,77,.35)]">
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
+        <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />
+      </svg>
+    </div>
+  );
 };
 
 const RunnerGame: React.FC = () => {
@@ -212,7 +233,6 @@ const RunnerGame: React.FC = () => {
         const final = Math.floor(s.dist / 10) + s.bonus;
         setScore(final);
         setState('over');
-        if (final > (readTop()[0]?.score || 0) && final > 0) confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 }, colors: [who.color, '#fff', '#8b6cff'] });
         return;
       }
       const before = s.objs.length;
@@ -248,7 +268,7 @@ const RunnerGame: React.FC = () => {
           <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-lime">мини-игра · с нашими героями</div>
           <h3 className="mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">Убеги от дедлайна</h3>
         </div>
-        <p className="max-w-sm text-[14px] leading-relaxed text-haze">Прыгайте через жуков и стопки ТЗ, пробегайте под дедлайнами, ловите кофе. Наберите очки — получите скидку на сайт.</p>
+        <p className="max-w-sm text-[14px] leading-relaxed text-haze">Прыгайте через ошибки и стопки ТЗ, пробегайте под дедлайнами, собирайте кофе и звёзды. Наберите очки — получите скидку на сайт.</p>
       </div>
 
       <div
@@ -306,7 +326,11 @@ const RunnerGame: React.FC = () => {
         {/* счёт */}
         {state === 'play' && (
           <div className="absolute right-4 top-4 flex items-center gap-4 font-mono text-[13px] text-haze">
-            {slow && <span className="text-[#ffd66b]">☕ замедление</span>}
+            {slow && (
+              <span className="flex items-center gap-1.5 text-[#ffd66b]">
+                <CoffeeIcon className="h-4 w-4" /> замедление
+              </span>
+            )}
             <span>
               очки <span ref={scoreEl} className="font-display text-xl font-semibold text-mist">0</span>
             </span>

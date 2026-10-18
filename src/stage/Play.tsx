@@ -200,7 +200,7 @@ const Play: React.FC<{ params: URLSearchParams }> = ({ params }) => {
           {phase === 'end' && state?.winner && (
             <motion.div key="end" className="flex flex-col items-center text-center" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
               <Chibi m={TEAM.find((m) => m.id === state.winner)!} size={150} mode="cheer" />
-              <div className="mt-4 font-display text-3xl font-bold">{state.winner === team.id ? 'Ваша команда победила! 🎉' : 'В этот раз не повезло'}</div>
+              <div className="mt-4 font-display text-3xl font-bold">{state.winner === team.id ? 'Ваша команда победила!' : 'В этот раз не повезло'}</div>
               <p className="mt-2 text-haze">Вы нажали {mine} раз. Ждём следующий раунд!</p>
             </motion.div>
           )}

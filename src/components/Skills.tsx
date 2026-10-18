@@ -48,12 +48,21 @@ const ShopDemo: React.FC = () => {
   return (
     <div className="relative flex w-full max-w-[460px] items-center gap-5">
       <div className="relative w-[58%] rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_30%_30%,#3ee6ff,#8b6cff_55%,#1b1633)]">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-[linear-gradient(160deg,#1f1b33,#121019)]">
+          {/* макет смартфона: корпус, экран, вырез под камеру */}
           <motion.div
-            className="absolute left-1/2 top-1/2 h-[64%] w-[34%] -translate-x-1/2 -translate-y-1/2 rounded-[18%] border border-white/40 bg-gradient-to-b from-white/30 to-white/5 shadow-2xl backdrop-blur"
-            animate={{ rotate: [-6, 6, -6], y: ['-52%', '-46%', '-52%'] }}
+            className="absolute left-1/2 top-[14%] h-[96%] w-[38%] -translate-x-1/2 rounded-[22px] border-[3px] border-[#3a3748] bg-[#0b0a10] p-[5px] shadow-[0_20px_40px_rgba(0,0,0,.5)]"
+            animate={{ y: [0, -6, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-          />
+          >
+            <div className="relative h-full w-full overflow-hidden rounded-[16px] bg-[linear-gradient(170deg,#8b6cff,#3ee6ff_70%,#c8ff4d)]">
+              <div className="absolute left-1/2 top-1.5 h-2 w-8 -translate-x-1/2 rounded-full bg-black" />
+              <div className="absolute inset-x-2 bottom-3 space-y-1">
+                <div className="h-1.5 w-2/3 rounded-full bg-white/80" />
+                <div className="h-1.5 w-1/2 rounded-full bg-white/50" />
+              </div>
+            </div>
+          </motion.div>
         </div>
         <div className="mt-3 flex items-end justify-between">
           <div>
@@ -91,7 +100,7 @@ const ShopDemo: React.FC = () => {
   );
 };
 
-// 2. 3D-куб, крутится сам и тянется за курсором
+// 2. Каркасный 3D-глобус: крутится сам и тянется за курсором
 const CubeDemo: React.FC = () => {
   const rx = useSpring(useMotionValue(-22), { stiffness: 80, damping: 14 });
   const ry = useSpring(useMotionValue(35), { stiffness: 80, damping: 14 });
@@ -112,14 +121,6 @@ const CubeDemo: React.FC = () => {
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
   }, [ry, inView]);
-  const faces = [
-    { t: 'rotateY(0deg)', c: 'from-violet to-cyan' },
-    { t: 'rotateY(90deg)', c: 'from-cyan to-lime' },
-    { t: 'rotateY(180deg)', c: 'from-rose to-violet' },
-    { t: 'rotateY(-90deg)', c: 'from-lime to-cyan' },
-    { t: 'rotateX(90deg)', c: 'from-violet to-rose' },
-    { t: 'rotateX(-90deg)', c: 'from-cyan to-violet' },
-  ];
   return (
     <div
       ref={box}
@@ -137,14 +138,19 @@ const CubeDemo: React.FC = () => {
         rx.set(-22);
       }}
     >
-      <motion.div className="relative h-24 w-24" style={{ transformStyle: 'preserve-3d', rotateX: rx, rotateY: ry }}>
-        {faces.map((f, i) => (
+      {/* каркасный глобус: меридианы и параллели из тонких колец */}
+      <motion.div className="relative h-32 w-32" style={{ transformStyle: 'preserve-3d', rotateX: rx, rotateY: ry }}>
+        {Array.from({ length: 8 }, (_, i) => (
+          <div key={`m${i}`} className="absolute inset-0 rounded-full border border-cyan/50" style={{ transform: `rotateY(${i * 22.5}deg)` }} />
+        ))}
+        {[-0.66, -0.33, 0, 0.33, 0.66].map((k) => (
           <div
-            key={i}
-            className={`absolute inset-0 rounded-xl border border-white/30 bg-gradient-to-br ${f.c} opacity-90`}
-            style={{ transform: `${f.t} translateZ(48px)`, backfaceVisibility: 'hidden' }}
+            key={`p${k}`}
+            className={`absolute inset-0 rounded-full border ${k === 0 ? 'border-lime/80' : 'border-violet/50'}`}
+            style={{ transform: `rotateX(90deg) translateZ(${k * 64}px) scale(${Math.sqrt(1 - k * k)})` }}
           />
         ))}
+        <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-lime shadow-[0_0_16px_#c8ff4d]" />
       </motion.div>
     </div>
   );
@@ -206,8 +212,8 @@ const MotionDemo: React.FC = () => {
 const MESSAGES = [
   { me: false, t: 'Здравствуйте! Хочу iPhone 17 Pro' },
   { me: true, t: 'Отличный выбор! Цвет и память?' },
-  { me: false, t: 'Синий, 256 ГБ 💙' },
-  { me: true, t: '✅ Заказ №1042 оформлен' },
+  { me: false, t: 'Синий, 256 ГБ' },
+  { me: true, t: 'Заказ №1042 оформлен' },
 ];
 const TelegramDemo: React.FC = () => {
   const ref = useRef<HTMLDivElement>(null);

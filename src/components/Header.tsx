@@ -8,7 +8,7 @@ export const NAV = [
   { id: 'skills', label: 'Возможности' },
   { id: 'console', label: 'Пульт' },
   { id: 'team', label: 'Команда' },
-  { id: 'game', label: 'Игра' },
+  { id: 'security', label: 'Защита' },
   { id: 'contact', label: 'Контакты' },
 ];
 
