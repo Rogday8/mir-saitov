@@ -3,6 +3,7 @@ import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TEAM, type Member } from '../../data';
 import { artwork, codeScreen, parquet, planBoard, renderScreen, sign } from './textures';
+import { profileGeometry, ringPath, roundedRect, tube, type Profile } from './arch';
 
 // Башня «Мир сайтов» в разрезе — как кукольный дом: передняя стена снята, видно все этажи.
 // 0 — лобби, 1–3 — этажи команды (каждый под характер человека), сверху — крыша с вывеской.
@@ -10,6 +11,8 @@ export const W = 10; // ширина
 export const D = 8; // глубина
 export const H = 3.4; // высота этажа
 export const LEVELS = 4;
+/** башня стоит на подиуме — всё здание поднято на эту высоту */
+export const BASE = 0.6;
 
 export const FLOORS = [
   { title: 'Лобби', accent: '#c8ff4d', member: null as Member | null },
@@ -169,7 +172,7 @@ const Lobby: React.FC = () => {
     <group>
       <B p={[0, 0.13, 0]} s={[W - 0.4, 0.02, D - 0.2]} c="#d7d3cb" r={0.25} shadow={false} />
       <B p={[0, H / 2, -D / 2 + 0.1]} s={[W, H - 0.24, 0.2]} c="#24222e" />
-      <B p={[-W / 2 + 0.1, H / 2, 0]} s={[0.2, H - 0.24, D]} c="#2b2836" />
+      <B p={[-W / 2 + 0.1, H / 2, 0.1]} s={[0.2, H - 0.24, D - 0.2]} c="#2b2836" />
       <Pic p={[0.4, 2.05, -D / 2 + 0.22]} s={[6.2, 0.85]} tex={logo} transparent />
       {/* стойка ресепшен */}
       <B p={[0.6, 0.62, -1.4]} s={[3.4, 1.0, 0.9]} c="#1b1925" r={0.4} />
@@ -193,7 +196,7 @@ const PixelStudio: React.FC<{ m: Member }> = ({ m }) => {
       <B p={[0, 0.13, 0]} s={[W - 0.4, 0.02, D - 0.2]} c="#15131f" r={0.5} shadow={false} />
       <B p={[0.4, 0.15, -0.6]} s={[5, 0.02, 3.4]} c="#2d2257" r={0.95} shadow={false} />
       <B p={[0, H / 2, -D / 2 + 0.1]} s={[W, H - 0.24, 0.2]} c="#191730" />
-      <B p={[-W / 2 + 0.1, H / 2, 0]} s={[0.2, H - 0.24, D]} c="#1c1a35" />
+      <B p={[-W / 2 + 0.1, H / 2, 0.1]} s={[0.2, H - 0.24, D - 0.2]} c="#1c1a35" />
       {/* неон по стенам */}
       <B p={[0, 0.24, -D / 2 + 0.22]} s={[W - 0.5, 0.05, 0.05]} c={m.color} e={m.color} ei={2.2} shadow={false} />
       <B p={[-W / 2 + 0.22, 0.24, 0]} s={[0.05, 0.05, D - 0.4]} c={m.color} e={m.color} ei={2.2} shadow={false} />
@@ -255,7 +258,7 @@ const ChiefOffice: React.FC<{ m: Member }> = ({ m }) => {
         <meshStandardMaterial map={wood} roughness={0.55} />
       </mesh>
       <B p={[0, H / 2, -D / 2 + 0.1]} s={[W, H - 0.24, 0.2]} c="#1f3a2f" />
-      <B p={[-W / 2 + 0.1, H / 2, 0]} s={[0.2, H - 0.24, D]} c="#e6dfd1" r={0.85} />
+      <B p={[-W / 2 + 0.1, H / 2, 0.1]} s={[0.2, H - 0.24, D - 0.2]} c="#e6dfd1" r={0.85} />
       {/* доска с планом проекта */}
       <B p={[-W / 2 + 0.24, 1.85, -0.4]} s={[0.06, 2.2, 3.5]} c="#2b2a27" />
       <Pic p={[-W / 2 + 0.28, 1.85, -0.4]} s={[3.36, 2.08]} tex={board} rot={[0, Math.PI / 2, 0]} glow={false} />
@@ -314,7 +317,7 @@ const Atelier: React.FC<{ m: Member }> = ({ m }) => {
     <group>
       <B p={[0, 0.13, 0]} s={[W - 0.4, 0.02, D - 0.2]} c="#cfcac1" r={0.6} shadow={false} />
       <B p={[0, H / 2, -D / 2 + 0.1]} s={[W, H - 0.24, 0.2]} c="#e6e2da" r={0.9} />
-      <B p={[-W / 2 + 0.1, H / 2, 0]} s={[0.2, H - 0.24, D]} c="#dcd7ce" r={0.9} />
+      <B p={[-W / 2 + 0.1, H / 2, 0.1]} s={[0.2, H - 0.24, D - 0.2]} c="#dcd7ce" r={0.9} />
       <B p={[2.4, 1.6, -D / 2 + 0.21]} s={[3.6, 2.5, 0.02]} c={m.color} e={m.color} ei={0.25} shadow={false} />
       {/* большой монитор с моделью */}
       <B p={[-1.2, 1.85, -D / 2 + 0.24]} s={[2.7, 1.6, 0.06]} c="#111" />
@@ -358,8 +361,29 @@ const Office: React.FC<{ selected: number | null; hovered: number | null; onHove
   const cabin = useRef<THREE.Group>(null);
   const roofSign = useMemo(() => sign('МИР САЙТОВ', '#c8ff4d', '700 140px Unbounded, sans-serif', 1700, 240), []);
   const lift = useRef({ y: 0, idle: 0 });
+  const glow = '#c8ff4d';
+  const plinth = useMemo(() => {
+    const low: Profile = { shape: roundedRect(20, 15.5, 1.8), h: 0.3, y0: -BASE + 0.03, levels: 1, smooth: true, top: true };
+    const high: Profile = { shape: roundedRect(17.6, 13, 1.3), h: BASE - 0.33, y0: -BASE + 0.33, levels: 1, smooth: true, top: true };
+    return { low: profileGeometry(low), high: profileGeometry(high), edge: tube(ringPath(high, 1, 0.03, -0.02), 0.035, true) };
+  }, []);
 
+  // свет в комнатах: у выбранного этажа — полный, в обзоре города — приглушённый
+  const floorRefs = useRef<(THREE.Group | null)[]>([]);
+  const lights = useRef<{ l: THREE.PointLight; base: number; floor: number }[] | null>(null);
   useFrame((_, dt) => {
+    if (!lights.current) {
+      lights.current = [];
+      floorRefs.current.forEach((g, floor) =>
+        g?.traverse((o) => {
+          if ((o as THREE.PointLight).isPointLight) lights.current!.push({ l: o as THREE.PointLight, base: (o as THREE.PointLight).intensity, floor });
+        }),
+      );
+    }
+    for (const it of lights.current) {
+      const k = selected === null ? 0.5 : selected === it.floor ? 1 : 0.3;
+      it.l.intensity += (it.base * k - it.l.intensity) * Math.min(1, dt * 3);
+    }
     const c = cabin.current;
     if (!c) return;
     // лифт едет к выбранному этажу, а без выбора — неспешно катается между этажами
@@ -372,44 +396,68 @@ const Office: React.FC<{ selected: number | null; hovered: number | null; onHove
 
   const click = (i: number) => (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
+    if (e.delta > 6) return; // это был поворот города, а не клик
     onSelect(i);
   };
 
   return (
-    <group>
-      {/* фундамент */}
-      <B p={[0, -0.25, 0]} s={[W + 3.4, 0.5, D + 2]} c="#1a1824" r={0.9} />
+    <group position={[0, BASE, 0]}>
+      {/* подиум в две ступени со светящейся кромкой */}
+      <mesh geometry={plinth.low} position={[-0.9, 0, 0]} receiveShadow>
+        <meshStandardMaterial color="#26242f" roughness={0.6} />
+      </mesh>
+      <mesh geometry={plinth.high} position={[-0.9, 0, 0]} receiveShadow>
+        <meshStandardMaterial color="#4a4755" roughness={0.35} metalness={0.3} />
+      </mesh>
+      <mesh geometry={plinth.edge} position={[-0.9, 0, 0]}>
+        <meshBasicMaterial color="#9fd03a" toneMapped={false} />
+      </mesh>
       {/* перекрытия с подсвеченной кромкой */}
       {Array.from({ length: LEVELS + 1 }, (_, i) => {
         const acc = FLOORS[Math.min(i, LEVELS - 1)].accent;
         const on = hovered === i || selected === i;
         return (
           <group key={i} position={[0, i * H, 0]}>
-            <B p={[0, 0, 0]} s={[W, 0.24, D]} c="#2a2833" r={0.6} />
-            <B p={[0, 0.02, D / 2 + 0.01]} s={[W, 0.06, 0.03]} c={acc} e={acc} ei={on ? 3 : 1.2} shadow={false} />
+            <B p={[0, 0, 0]} s={[W, 0.24, D]} c="#b9b6c4" r={0.5} />
+            <B p={[0, 0.02, D / 2 + 0.01]} s={[W - 0.02, 0.06, 0.03]} c={acc} e={acc} ei={on ? 3.2 : 1.4} shadow={false} />
           </group>
         );
       })}
-      {/* колонны и стекло справа */}
-      {[-W / 2 + 0.1, W / 2 - 0.1].map((x) => (
-        <B key={x} p={[x, (LEVELS * H) / 2, D / 2 - 0.1]} s={[0.2, LEVELS * H, 0.2]} c="#24222d" />
+      {/* белый каркас: четыре пилона по углам, на передних — светящиеся линии */}
+      {[
+        [-W / 2 + 0.05, D / 2 - 0.05],
+        [W / 2 - 0.05, D / 2 - 0.05],
+        [-W / 2 + 0.05, -D / 2 + 0.05],
+        [W / 2 - 0.05, -D / 2 + 0.05],
+      ].map(([x, z], i) => (
+        <group key={i}>
+          <B p={[x, (LEVELS * H + 0.9) / 2 - 0.12, z]} s={[0.4, LEVELS * H + 0.9, 0.4]} c="#ecebf3" r={0.4} />
+          {i < 2 && <B p={[x, (LEVELS * H + 0.9) / 2 - 0.12, z + 0.205]} s={[0.05, LEVELS * H + 0.86, 0.02]} c={glow} e={glow} ei={0.8} shadow={false} />}
+        </group>
       ))}
-      <B p={[W / 2 - 0.1, (LEVELS * H) / 2, -D / 2 + 0.1]} s={[0.2, LEVELS * H, 0.2]} c="#24222d" />
+      {/* ламели на боковом фасаде — вокруг шахты лифта */}
+      {[-3.6, -2.9, 0.4, 1.1, 1.8, 2.5, 3.2].map((z) => (
+        <B key={`s${z}`} p={[-W / 2 - 0.15, (LEVELS * H) / 2, z]} s={[0.26, LEVELS * H + 0.2, 0.08]} c="#e4e2ec" r={0.4} />
+      ))}
+      {/* ламели на задном фасаде */}
+      {Array.from({ length: 12 }, (_, i) => (
+        <B key={`f${i}`} p={[-4.4 + i * 0.8, (LEVELS * H) / 2, -D / 2 - 0.15]} s={[0.08, LEVELS * H + 0.2, 0.26]} c="#e4e2ec" r={0.4} />
+      ))}
       <B p={[W / 2 - 0.05, (LEVELS * H) / 2, 0]} s={[0.04, LEVELS * H, D - 0.3]} c="#9fd4ff" o={0.07} r={0.05} m={0.9} shadow={false} />
 
       {/* этажи */}
-      <group position={[0, 0, 0]}>
+      <group ref={(g) => (floorRefs.current[0] = g)} position={[0, 0, 0]}>
         <Lobby />
       </group>
-      <group position={[0, H, 0]}>
+      <group ref={(g) => (floorRefs.current[1] = g)} position={[0, H, 0]}>
         <PixelStudio m={TEAM[0]} />
         <Person m={TEAM[0]} from={[1.6, 0.14, -0.9]} to={[-1.6, 0.14, 1.6]} />
       </group>
-      <group position={[0, H * 2, 0]}>
+      <group ref={(g) => (floorRefs.current[2] = g)} position={[0, H * 2, 0]}>
         <ChiefOffice m={TEAM[1]} />
         <Person m={TEAM[1]} from={[-2.4, 0.14, 0.2]} to={[1.8, 0.14, 0.4]} />
       </group>
-      <group position={[0, H * 3, 0]}>
+      <group ref={(g) => (floorRefs.current[3] = g)} position={[0, H * 3, 0]}>
         <Atelier m={TEAM[2]} />
         <Person m={TEAM[2]} from={[0.2, 0.14, 0.6]} to={[-2.1, 0.14, 2.2]} />
       </group>

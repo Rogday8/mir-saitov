@@ -194,3 +194,162 @@ export function parquet() {
   t.repeat.set(2, 2);
   return t;
 }
+
+// ——— фасады небоскрёбов ———
+// Текстура покрывает FACADE_U × FACADE_V единиц сцены: 16 пролётов по 0.9 и 32 этажа по 0.62.
+// UV в геометрии башен считаются в единицах сцены / эти размеры — поэтому этажи у всех башен одной высоты.
+export const FACADE_U = 14.4;
+export const FACADE_V = 19.84;
+export type FacadeStyle = 'office' | 'ribbon' | 'diagrid' | 'fins' | 'lobby';
+
+const BAYS = 16;
+const FLOORS_N = 32;
+const CW = 32; // пикселей на пролёт
+const CH = 32; // пикселей на этаж
+
+function wrapTex(t: THREE.CanvasTexture, color = true) {
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  if (!color) t.colorSpace = THREE.NoColorSpace;
+  return t;
+}
+
+/** Фасад: map — структура (стекло, импосты, перекрытия), emissive — горящие офисы. */
+export function facade(seed: number, style: FacadeStyle, lit = 0.28) {
+  const W = BAYS * CW;
+  const Hh = FLOORS_N * CH;
+  const map = make(`fm-${seed}-${style}`, W, Hh, (c) => {
+    const ribbon = style === 'ribbon';
+    for (let f = 0; f < FLOORS_N; f++) {
+      const y = f * CH;
+      // стекло
+      c.fillStyle = '#7d8494';
+      c.fillRect(0, y, W, CH);
+      // перекрытие / ленточная панель
+      c.fillStyle = ribbon ? '#d9dbe2' : '#555a66';
+      c.fillRect(0, y + CH - (ribbon ? 11 : 4), W, ribbon ? 11 : 4);
+    }
+    // импосты
+    c.fillStyle = style === 'fins' ? '#e8eaf0' : '#a3a9b6';
+    const mw = style === 'fins' ? 5 : 2;
+    for (let b = 0; b < BAYS; b++) c.fillRect(b * CW, 0, mw, Hh);
+    if (style === 'diagrid') diagridLines(c, W, Hh, '#e3e6ee', 4);
+  });
+  const emissive = make(`fe-${seed}-${style}-${lit}`, W, Hh, (c) => {
+    const r = rand(seed * 977 + 13);
+    c.fillStyle = '#000';
+    c.fillRect(0, 0, W, Hh);
+    const ribbon = style === 'ribbon';
+    for (let f = 0; f < FLOORS_N; f++) {
+      const y = f * CH;
+      const gTop = y + 3;
+      const gH = CH - (ribbon ? 15 : 8);
+      // общий слабый свет этажа — стекло ночью чуть светится изнутри
+      c.fillStyle = `rgba(70, 90, 150, ${0.07 + r() * 0.06})`;
+      c.fillRect(0, gTop, W, gH);
+      if (style === 'lobby') {
+        const g = c.createLinearGradient(0, gTop, 0, gTop + gH);
+        g.addColorStop(0, 'rgba(255, 228, 182, 0.95)');
+        g.addColorStop(1, 'rgba(255, 196, 130, 0.55)');
+        c.fillStyle = g;
+        c.fillRect(0, gTop, W, gH);
+        continue;
+      }
+      // офисы горят «кусками» по несколько пролётов подряд
+      const floorLit = lit * (0.4 + r() * 1.2);
+      let b = 0;
+      while (b < BAYS) {
+        if (r() < floorLit) {
+          const run = 1 + ((r() * (ribbon ? 8 : 5)) | 0);
+          const warm = r() < 0.72;
+          const k = 0.55 + r() * 0.45;
+          const g = c.createLinearGradient(0, gTop, 0, gTop + gH);
+          g.addColorStop(0, warm ? `rgba(255, 236, 205, ${k})` : `rgba(222, 236, 255, ${k})`);
+          g.addColorStop(1, warm ? `rgba(255, 200, 150, ${k * 0.5})` : `rgba(160, 196, 255, ${k * 0.45})`);
+          c.fillStyle = g;
+          for (let q = 0; q < run && b + q < BAYS; q++) c.fillRect((b + q) * CW + 3, gTop, CW - 4, gH);
+          b += run;
+        } else b += 1 + ((r() * 3) | 0);
+      }
+    }
+    if (style === 'diagrid') diagridLines(c, W, Hh, 'rgba(170, 205, 255, 0.35)', 3);
+  });
+  return { map: wrapTex(map), emissive: wrapTex(emissive) };
+}
+
+// диагональная сетка, бесшовная по обеим осям
+function diagridLines(c: CanvasRenderingContext2D, w: number, h: number, color: string, lw: number) {
+  c.strokeStyle = color;
+  c.lineWidth = lw;
+  const step = w / 4; // 4 ромба по ширине
+  const rise = h / 8; // 8 ромбов по высоте — тогда линии сходятся на краях
+  for (let k = -12; k <= 12; k++) {
+    c.beginPath();
+    c.moveTo(k * step, 0);
+    c.lineTo(k * step + (h / rise) * step, h);
+    c.stroke();
+    c.beginPath();
+    c.moveTo(k * step, 0);
+    c.lineTo(k * step - (h / rise) * step, h);
+    c.stroke();
+  }
+}
+
+/** Площадь у башни: полированный камень, концентрические швы и лучи */
+export function plaza() {
+  return make('plaza', 2048, 2048, (c, w, h) => {
+    const cx = w / 2;
+    const cy = h / 2;
+    const g = c.createRadialGradient(cx, cy, 0, cx, cy, w / 2);
+    g.addColorStop(0, '#2a2836');
+    g.addColorStop(0.75, '#1c1b26');
+    g.addColorStop(1, '#15141d');
+    c.fillStyle = g;
+    c.fillRect(0, 0, w, h);
+    const R = w / 2;
+    // кольца плитки
+    for (let i = 1; i < 22; i++) {
+      c.strokeStyle = i % 4 === 0 ? 'rgba(255,255,255,.16)' : 'rgba(255,255,255,.06)';
+      c.lineWidth = i % 4 === 0 ? 3 : 1.5;
+      c.beginPath();
+      c.arc(cx, cy, (i / 22) * R, 0, Math.PI * 2);
+      c.stroke();
+    }
+    // лучи
+    for (let i = 0; i < 72; i++) {
+      const a = (i / 72) * Math.PI * 2;
+      c.strokeStyle = i % 6 === 0 ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,.045)';
+      c.lineWidth = 1.5;
+      c.beginPath();
+      c.moveTo(cx + Math.cos(a) * R * 0.18, cy + Math.sin(a) * R * 0.18);
+      c.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R);
+      c.stroke();
+    }
+  });
+}
+
+/** Мягкая круглая точка — для фонарей и огней */
+export function dot() {
+  return make('dot', 64, 64, (c, w) => {
+    const g = c.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
+    g.addColorStop(0, 'rgba(255,255,255,1)');
+    g.addColorStop(0.25, 'rgba(255,255,255,.85)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    c.fillStyle = g;
+    c.fillRect(0, 0, w, w);
+  });
+}
+
+/** Разметка дороги: тёмный асфальт и пунктир по центру (вдоль u) */
+export function road() {
+  const t = make('road', 256, 64, (c, w, h) => {
+    c.fillStyle = '#17161f';
+    c.fillRect(0, 0, w, h);
+    c.fillStyle = 'rgba(255,255,255,.08)';
+    c.fillRect(0, 3, w, 2);
+    c.fillRect(0, h - 5, w, 2);
+    c.fillStyle = 'rgba(255,236,190,.5)';
+    for (let x = 0; x < w; x += 64) c.fillRect(x, h / 2 - 1.5, 34, 3);
+  });
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
