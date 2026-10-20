@@ -167,4 +167,10 @@ export const PERKS: Record<string, { label: string; jump: number; coffee: number
 };
 
 /** Авторы 3D-моделей со Sketchfab (лицензия CC BY 4.0 — обязательно указывать). Показываются в подвале. */
-export const CREDITS: { name: string; author: string; url: string }[] = [];
+export const CREDITS: { name: string; author: string; url: string }[] = [
+  { name: 'Low Poly Night City Building Skyline', author: '99.Miles', url: 'https://sketchfab.com/3d-models/b0035b8713b048bb8ddf311ee67c28c8' },
+  { name: 'Asian Themed Low Poly Night City Buildings', author: '99.Miles', url: 'https://sketchfab.com/3d-models/9f0343aff4814b758dc6e905aba5b5e0' },
+  { name: 'Singapore Office Skyscraper', author: '99.Miles', url: 'https://sketchfab.com/3d-models/2305f0fe03ba44229a1f768dcb48bd8f' },
+  { name: 'Atlanta, Corporate Office Building', author: '99.Miles', url: 'https://sketchfab.com/3d-models/d96380fb001345cca9a9be121f3e43d5' },
+  { name: 'Moscow State University (night lit)', author: 'Dimitera', url: 'https://sketchfab.com/3d-models/9faee05c1773474888d146916db7dbc3' },
+];

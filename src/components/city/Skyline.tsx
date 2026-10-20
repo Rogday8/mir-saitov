@@ -1,9 +1,11 @@
-import React, { useLayoutEffect, useMemo, useRef } from 'react';
+import React, { Suspense, useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { edgePath, noPointLights, profileGeometry, ringPath, roundedPoly, roundedRect, superellipse, tube, type Profile } from './arch';
 import { FACADE_U, FACADE_V, dot, facade, plaza, rand, road, sign, type FacadeStyle } from './textures';
+import { AVENUE0, AVENUES, AVE_W, RING1, RING2, RIVER_CURVE, RIVER_W, TAU, deg, nearRiver, polar } from './layout';
+import CityModels, { layoutModels, occupied, reserve } from './Models';
 
 // Город вокруг нашей башни, кольцами — как Москва:
 // площадь → Бульварное кольцо с машинами → парк с павильонами → второе кольцо →
@@ -11,16 +13,6 @@ import { FACADE_U, FACADE_V, dot, facade, plaza, rand, road, sign, type FacadeSt
 // Шесть проспектов расходятся лучами; все здания стоят на своих участках и не пересекаются.
 
 type V3 = [number, number, number];
-const TAU = Math.PI * 2;
-const deg = (d: number) => (d * Math.PI) / 180;
-/** азимут как у камеры: 0 — на +z, по часовой при взгляде сверху */
-const polar = (a: number, r: number): [number, number] => [Math.sin(a) * r, Math.cos(a) * r];
-
-export const AVENUE0 = 0.55; // проспект прямо к камере
-export const AVENUES = Array.from({ length: 6 }, (_, k) => AVENUE0 + (k * TAU) / 6);
-const RING1 = { r: 26, w: 6 };
-const RING2 = { r: 52.5, w: 5 };
-const AVE_W = 5;
 
 // ——— материалы (общие, с кэшем) ———
 const mats = new Map<string, THREE.Material>();
@@ -105,182 +97,28 @@ function mercury(h: number, seed: number): Built {
   };
 }
 
-/** «ОКО»: квадрат со скруглёнными углами, вертикальные ламели, корона-каркас */
-function oko(h: number, seed: number, w = 11, d = 11): Built {
-  const shape = roundedRect(w, d, 1.4, 3);
-  const p: Profile = { shape, h, levels: 1, scale: (t) => 1 - 0.06 * t, smooth: false, u0: seed * 3 };
-  const top: Profile = { ...p, y0: h, h: 3.2, scale: () => 0.94 };
-  const parts: Part[] = [
-    body(p, glass('#4f73a6', 'fins', seed, 0.28)),
-    crown(p, '#5fe8ff'),
-    crown(top, '#5fe8ff', 1, 0.12, 2),
-    ...edges(p, [1, 5, 9, 13], '#5fe8ff', 0.08, 1.6),
-    ...podium(w + 6, d + 6),
-  ];
-  // стойки короны
-  [1, 5, 9, 13].forEach((k) => parts.push({ geo: tube(edgePath(top, k, 0.0, 2), 0.12), mat: concrete('#cfd7e6') }));
-  return { parts, beacons: [[0, h + 3.4, 0]] };
-}
-
-/** «Город Столиц»: стопка сдвинутых блоков, между ними светящиеся террасы */
-function stack(h: number, seed: number, w = 10, d = 9, n = 6): Built {
-  const parts: Part[] = [];
-  const r = rand(seed);
-  const hb = h / n;
-  for (let i = 0; i < n; i++) {
-    const s = 1 - i * 0.05;
-    const p: Profile = { shape: roundedRect(w * s, d * s, 0.9, 4), h: hb, y0: i * hb, levels: 1, smooth: true, twist: () => (i % 2 ? 0.16 : -0.06), u0: i * 5 };
-    const dx = (r() - 0.5) * 1.4;
-    const dz = (r() - 0.5) * 1.2;
-    parts.push(body(p, glass('#5d6c8f', 'office', seed + i, 0.3), roofMat(), [dx, 0, dz]));
-    if (i > 0) {
-      const slab: Profile = { shape: roundedRect(w * s + 1.6, d * s + 1.4, 1.2, 4), h: 0.36, y0: i * hb - 0.18, levels: 1, smooth: true, top: true, bottom: true, twist: () => 0.05 };
-      parts.push({ geo: profileGeometry(slab), mat: [led('#ffd9a0', 1.1), concrete()] });
-    }
-  }
-  parts.push(...podium(w + 6, d + 6));
-  return { parts, beacons: [[0, h + 0.6, 0]] };
-}
-
-/** «Нева»: скруглённый квадрат с диагональной сеткой */
-function diagrid(h: number, seed: number, w = 8.4, glow = '#e6efff'): Built {
-  const p: Profile = { shape: roundedRect(w, w, 2.4, 8), h, levels: 1, smooth: true, u0: seed * 3 };
-  return { parts: [body(p, glass('#7b8db5', 'diagrid', seed, 0.22)), crown(p, glow), ...podium(w + 6, w + 6)], beacons: [[0, h + 0.6, 0]] };
-}
-
-/** «Империя»: широкая пластина-линза */
-function slab(h: number, seed: number): Built {
-  const p: Profile = { shape: superellipse(8.2, 3.8, 2.6, 64), h, levels: 1, smooth: true, u0: seed * 3 };
-  return {
-    parts: [body(p, glass('#5f70a0', 'office', seed, 0.34)), crown(p, '#a58bff'), ...edges(p, [0, 32], '#a58bff', 0.1, 2), ...podium(22, 13)],
-    beacons: [
-      [-6, h + 0.6, 0],
-      [6, h + 0.6, 0],
-    ],
-  };
-}
-
-/** «Огурец»: круглая башня с выпуклым силуэтом и диагональной сеткой, светящийся купол */
-function gherkin(h: number, seed: number): Built {
-  const R = 6.4;
-  const prof = (t: number) => Math.sin(Math.PI * (0.18 + 0.76 * t)) ** 0.6;
-  const p: Profile = { shape: superellipse(R, R, 2, 48), h, levels: 36, scale: prof, smooth: true, u0: seed * 3 };
-  const rt = R * prof(1);
-  const dome = new THREE.SphereGeometry(rt, 32, 12, 0, TAU, 0, Math.PI / 2);
-  dome.translate(0, h, 0);
-  return { parts: [body(p, glass('#4d8a96', 'diagrid', seed, 0.24)), { geo: dome, mat: led('#bff6ff', 1.1) }, ...podium(15, 15)], beacons: [[0, h + rt, 0]] };
-}
-
-/** Закрученный шестигранник с гранёным фасадом */
-function hexTwist(h: number, seed: number, glow = '#ff9ccf'): Built {
-  const p: Profile = { shape: roundedPoly(6, 6.6, 0.5, 2), h, levels: 44, twist: (t) => t * 1.5, smooth: false, u0: seed * 3 };
-  return {
-    parts: [body(p, glass('#6b78a3', 'ribbon', seed, 0.26)), crown(p, glow), ...edges(p, [1, 4, 7, 10, 13, 16], glow, 0.08, 1.8), ...podium(15, 15)],
-    beacons: [[0, h + 0.6, 0]],
-  };
-}
-
-/** Спиральная башня: светящийся ствол и плиты этажей, каждая повёрнута чуть больше */
-function spiral(h: number, seed: number, glow = '#ffe2b8'): Built {
-  const core: Profile = { shape: superellipse(2.9, 2.9, 2, 32), h, levels: 1, smooth: true, u0: seed * 3 };
-  const plates: THREE.BufferGeometry[] = [];
-  const pl = superellipse(5.2, 3.7, 2.3, 48);
-  let i = 0;
-  for (let y = 1.2; y < h - 0.4; y += 1.25, i++) {
-    const tw = i * 0.075;
-    const g = profileGeometry({ shape: pl, h: 0.26, y0: y, levels: 1, smooth: true, top: true, bottom: true, twist: () => tw });
-    g.clearGroups();
-    plates.push(g);
-  }
-  const last = (i - 1) * 0.075;
-  return {
-    parts: [
-      body(core, glass('#7a6f80', 'office', seed, 0.7)),
-      { geo: mergeGeometries(plates), mat: concrete('#e8e6ee') },
-      { geo: tube(ringPath({ shape: pl, h, twist: () => last }, 1, 0.08, -0.3), 0.1, true), mat: led(glow, 1.8) },
-      ...podium(13, 11),
-    ],
-    beacons: [[0, h + 0.6, 0]],
-  };
-}
-
-/** Линза с мягкими остриями, слегка закручена */
-function lens(h: number, seed: number, glow = '#8b6cff'): Built {
-  const p: Profile = { shape: superellipse(7, 2.8, 1.55, 64), h, levels: 20, twist: (t) => t * 0.4, smooth: true, u0: seed * 3 };
-  return { parts: [body(p, glass('#7470b2', 'ribbon', seed, 0.28)), crown(p, glow), ...edges(p, [0, 32], glow, 0.1, 2.2), ...podium(18, 11)], beacons: [[0, h + 0.6, 0]] };
-}
-
-/** Ступенчатое здание с садами на террасах */
-function terraced(seed: number): Built {
-  const parts: Part[] = [];
-  const green = concrete('#2f5a3c');
-  const r = rand(seed);
-  const crowns: THREE.BufferGeometry[] = [];
-  const n = 5;
-  for (let i = 0; i < n; i++) {
-    const w = 15 - i * 2.2;
-    const d = 11.5 - i * 1.7;
-    parts.push(body({ shape: roundedRect(w, d, 1.6, 6), h: 6, y0: i * 6, levels: 1, smooth: true, u0: i * 7 }, glass('#6a7593', 'office', seed + i, 0.36), green));
-    // деревья по краю террасы
-    for (let k = 0; k < 10; k++) {
-      const a = (k / 10) * TAU + r() * 0.3;
-      const g = new THREE.IcosahedronGeometry(0.55 + r() * 0.35, 0);
-      g.translate((Math.cos(a) * (w - 1.4)) / 2.15, i * 6 + 6.5, (Math.sin(a) * (d - 1.4)) / 2.15);
-      crowns.push(g);
-    }
-  }
-  parts.push({ geo: mergeGeometries(crowns), mat: cached('terr-tree', () => new THREE.MeshStandardMaterial({ color: '#3d7a4c', emissive: '#14402a', emissiveIntensity: 0.6, flatShading: true, roughness: 0.8 })) });
-  parts.push(...podium(19, 15, 1.2));
-  return { parts, beacons: [[0, 30.6, 0]] };
-}
-
-/** Сквиркл с короной заданного цвета */
-function squircle(h: number, seed: number, glow: string, tint = '#6d7ba0'): Built {
-  const p: Profile = { shape: superellipse(5, 5, 4, 48), h, levels: 1, smooth: true, u0: seed * 3 };
-  return { parts: [body(p, glass(tint, 'office', seed, 0.3)), crown(p, glow), ...podium(13, 13)], beacons: [[0, h + 0.6, 0]] };
-}
-
 interface Site {
   name: string;
   a: number; // азимут, град
   r: number;
   ry?: number;
   build: () => Built;
+  /** радиус участка вместе со стилобатом */
+  br: number;
 }
 
-// Участки подобраны так, что между зданиями (вместе со стилобатами) и до проспектов остаётся зазор
+// Москва-Сити узнаётся по трём башням — их нет в открытых моделях, поэтому они наши, процедурные.
+// Остальные небоскрёбы — настоящие модели со Sketchfab (Models.tsx), расставляются вокруг этих трёх.
 export const SITES: Site[] = [
-  // кластер Москва-Сити — за нашей башней (вокруг проспекта 211.5°)
-  { name: 'Эволюция', a: 221.5, r: 70, build: () => evolution(64, 11) },
-  { name: 'Федерация. Восток', a: 232.5, r: 90, build: () => vostok(92, 12) },
-  { name: 'Федерация. Запад', a: 244.5, r: 70, build: () => vostok(66, 13, 0.5 + Math.PI, false) },
-  { name: 'Город Столиц', a: 255.5, r: 90, build: () => stack(70, 14) },
-  { name: 'Нева', a: 262.5, r: 70, build: () => diagrid(62, 15) },
-  { name: 'Меркурий', a: 201.5, r: 70, build: () => mercury(76, 16) },
-  { name: 'ОКО', a: 190.5, r: 90, build: () => oko(84, 17) },
-  { name: 'ОКО. Юг', a: 179.5, r: 70, build: () => oko(54, 18, 9.5, 8.5) },
-  { name: 'Империя', a: 168.5, r: 90, ry: 0.4, build: () => slab(50, 19) },
-  { name: 'Нева 2', a: 160.5, r: 70, build: () => diagrid(56, 20, 8, '#c8ff4d') },
-  // правая сторона
-  { name: 'Огурец', a: 103.5, r: 74, build: () => gherkin(44, 21) },
-  { name: 'Грань', a: 118.5, r: 90, build: () => hexTwist(70, 22) },
-  { name: 'Спираль', a: 131.5, r: 72, build: () => spiral(52, 23) },
-  { name: 'Сквиркл', a: 142.5, r: 88, build: () => squircle(46, 24, '#3ee6ff') },
-  // левая сторона
-  { name: 'Линза', a: 282.5, r: 72, ry: 0.7, build: () => lens(58, 25) },
-  { name: 'Сады', a: 297.5, r: 90, ry: 0.3, build: () => terraced(26) },
-  { name: 'Линза 2', a: 309.5, r: 72, ry: -0.5, build: () => lens(46, 27, '#3ee6ff') },
-  { name: 'Треугольник', a: 321.5, r: 88, build: () => vostok(48, 28, 1.2, false) },
-  // со стороны камеры — ниже, чтобы не закрывать вид при облёте
-  { name: 'Сетка', a: 343.5, r: 80, build: () => diagrid(44, 29, 8, '#ff9ccf') },
-  { name: 'Блоки', a: 358.5, r: 92, build: () => stack(36, 30, 9, 8, 4) },
-  { name: 'Спираль 2', a: 12.5, r: 80, build: () => spiral(40, 31, '#c8ff4d') },
-  { name: 'Сквиркл 2', a: 23.5, r: 92, build: () => squircle(34, 32, '#8b6cff', '#7d6f9c') },
-  { name: 'Треугольник 2', a: 43.5, r: 82, build: () => vostok(40, 33, 0.2, false) },
-  { name: 'Линза 3', a: 58.5, r: 94, ry: 1.2, build: () => lens(38, 34, '#c8ff4d') },
-  { name: 'Грань 2', a: 72.5, r: 80, build: () => hexTwist(46, 35, '#3ee6ff') },
-  { name: 'Сквиркл 3', a: 83.5, r: 94, build: () => squircle(30, 36, '#ff9ccf') },
+  { name: 'Эволюция', a: 221.5, r: 72, build: () => evolution(66, 11), br: 10 },
+  { name: 'Федерация. Восток', a: 236, r: 96, build: () => vostok(96, 12), br: 12 },
+  { name: 'Меркурий', a: 199, r: 78, build: () => mercury(80, 16), br: 11 },
 ];
+for (const st of SITES) {
+  const [x, z] = polar(deg(st.a), st.r);
+  reserve(x, z, st.br);
+}
+layoutModels();
 
 // красные огни на крышах мигают все вместе — как у настоящих высоток
 const beaconMat = new THREE.MeshBasicMaterial({ color: '#ff2a2a', toneMapped: false });
@@ -305,7 +143,7 @@ const Tower: React.FC<{ s: Site }> = ({ s }) => {
 };
 
 // ——— небо: градиент и звёзды ———
-export const SKY_HORIZON = '#1a1530';
+export const SKY_HORIZON = '#121725';
 const Sky: React.FC = () => {
   const mat = useMemo(
     () =>
@@ -313,7 +151,7 @@ const Sky: React.FC = () => {
         side: THREE.BackSide,
         depthWrite: false,
         fog: false,
-        uniforms: { cH: { value: new THREE.Color(SKY_HORIZON) }, cM: { value: new THREE.Color('#0d0a1c') }, cZ: { value: new THREE.Color('#05040b') }, cGlow: { value: new THREE.Color('#3a2a6a') } },
+        uniforms: { cH: { value: new THREE.Color(SKY_HORIZON) }, cM: { value: new THREE.Color('#0a0d17') }, cZ: { value: new THREE.Color('#040509') }, cGlow: { value: new THREE.Color('#3a3a46') } },
         vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
         fragmentShader: `uniform vec3 cH; uniform vec3 cM; uniform vec3 cZ; uniform vec3 cGlow; varying vec3 vP;
           void main(){
@@ -378,7 +216,7 @@ const Plaza: React.FC = () => {
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]} material={led('#c8ff4d', 1.1)}>
         <ringGeometry args={[12.55, 12.75, 128]} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]} material={led('#8b6cff', 1.6)}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]} material={led('#eeebe5', 0.7)}>
         <ringGeometry args={[21.9, 22.15, 160]} />
       </mesh>
       {trees.map(([x, z], i) => (
@@ -447,30 +285,6 @@ function avenueGeo(a: number, r0: number, r1: number, w = AVE_W, y = 0.035) {
   return g;
 }
 
-// ——— река ———
-const RIVER_PTS = (() => {
-  const pts: THREE.Vector3[] = [];
-  const add = (a: number, r: number) => {
-    const [x, z] = polar(a, r);
-    pts.push(new THREE.Vector3(x, 0, z));
-  };
-  add(deg(70), 330);
-  add(deg(84), 200);
-  add(deg(98), 130);
-  for (let d = 112; d <= 318; d += 14) add(deg(d), 114 + Math.sin(deg(d) * 3) * 3);
-  add(deg(332), 130);
-  add(deg(345), 200);
-  add(deg(358), 330);
-  return pts;
-})();
-const RIVER_CURVE = new THREE.CatmullRomCurve3(RIVER_PTS);
-const RIVER_W = 12;
-const RIVER_SAMPLES = RIVER_CURVE.getSpacedPoints(600);
-function nearRiver(x: number, z: number, pad = 0) {
-  const lim = (RIVER_W / 2 + pad) ** 2;
-  for (const p of RIVER_SAMPLES) if ((p.x - x) ** 2 + (p.z - z) ** 2 < lim) return true;
-  return false;
-}
 /** участки проспекта, где он пересекает реку (по радиусу) */
 function crossings(a: number, r0: number, r1: number) {
   const out: [number, number][] = [];
@@ -807,6 +621,7 @@ const OuterCity: React.FC = () => {
         if (r() < 0.12) continue; // скверы
         const [x, z] = polar(a, rr);
         if (nearRiver(x, z, 9)) continue;
+        if (occupied(x, z, 9)) continue; // там стоит модель небоскрёба или квартал
         const far = (rr - 106) / 194;
         const w = 7 + r() * 5;
         const d = 7 + r() * 4;
@@ -869,6 +684,10 @@ const Skyline: React.FC = () => (
     {SITES.map((s) => (
       <Tower key={s.name} s={s} />
     ))}
+    {/* настоящие небоскрёбы подгружаются следом — город виден сразу, модели появляются по готовности */}
+    <Suspense fallback={null}>
+      <CityModels />
+    </Suspense>
     <Blink />
     <Label text="Москва-Сити" position={[CITY_LABEL[0], 108, CITY_LABEL[1]]} scale={34} />
     <Label text="Москва-река" position={[RIVER_LABEL[0], 3, RIVER_LABEL[1]]} scale={20} color="#9fbfff" />

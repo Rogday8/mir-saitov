@@ -418,7 +418,7 @@ const Office: React.FC<{ selected: number | null; hovered: number | null; onHove
         const on = hovered === i || selected === i;
         return (
           <group key={i} position={[0, i * H, 0]}>
-            <B p={[0, 0, 0]} s={[W, 0.24, D]} c="#b9b6c4" r={0.5} />
+            <B p={[0, 0, 0]} s={[W, 0.24, D]} c="#55555c" r={0.45} m={0.3} />
             <B p={[0, 0.02, D / 2 + 0.01]} s={[W - 0.02, 0.06, 0.03]} c={acc} e={acc} ei={on ? 3.2 : 1.4} shadow={false} />
           </group>
         );
@@ -431,17 +431,17 @@ const Office: React.FC<{ selected: number | null; hovered: number | null; onHove
         [W / 2 - 0.05, -D / 2 + 0.05],
       ].map(([x, z], i) => (
         <group key={i}>
-          <B p={[x, (LEVELS * H + 0.9) / 2 - 0.12, z]} s={[0.4, LEVELS * H + 0.9, 0.4]} c="#ecebf3" r={0.4} />
+          <B p={[x, (LEVELS * H + 0.9) / 2 - 0.12, z]} s={[0.4, LEVELS * H + 0.9, 0.4]} c="#2e2e33" r={0.35} m={0.5} />
           {i < 2 && <B p={[x, (LEVELS * H + 0.9) / 2 - 0.12, z + 0.205]} s={[0.05, LEVELS * H + 0.86, 0.02]} c={glow} e={glow} ei={0.8} shadow={false} />}
         </group>
       ))}
       {/* ламели на боковом фасаде — вокруг шахты лифта */}
       {[-3.6, -2.9, 0.4, 1.1, 1.8, 2.5, 3.2].map((z) => (
-        <B key={`s${z}`} p={[-W / 2 - 0.15, (LEVELS * H) / 2, z]} s={[0.26, LEVELS * H + 0.2, 0.08]} c="#e4e2ec" r={0.4} />
+        <B key={`s${z}`} p={[-W / 2 - 0.15, (LEVELS * H) / 2, z]} s={[0.26, LEVELS * H + 0.2, 0.08]} c="#2e2e33" r={0.35} m={0.5} />
       ))}
       {/* ламели на задном фасаде */}
       {Array.from({ length: 12 }, (_, i) => (
-        <B key={`f${i}`} p={[-4.4 + i * 0.8, (LEVELS * H) / 2, -D / 2 - 0.15]} s={[0.08, LEVELS * H + 0.2, 0.26]} c="#e4e2ec" r={0.4} />
+        <B key={`f${i}`} p={[-4.4 + i * 0.8, (LEVELS * H) / 2, -D / 2 - 0.15]} s={[0.08, LEVELS * H + 0.2, 0.26]} c="#2e2e33" r={0.35} m={0.5} />
       ))}
       <B p={[W / 2 - 0.05, (LEVELS * H) / 2, 0]} s={[0.04, LEVELS * H, D - 0.3]} c="#9fd4ff" o={0.07} r={0.05} m={0.9} shadow={false} />
 
