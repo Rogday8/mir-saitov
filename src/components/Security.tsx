@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { TEAM } from '../data';
 import { scrollToId } from '../lib/smooth';
-import { Eyebrow, Magnetic, SplitReveal } from './ui';
+import { Rise, Up } from './ui';
 
 // «Защита»: демонстрация — сайт захватывает вирус-вымогатель, появляется команда «Мира сайтов»,
 // устраняет угрозу и возвращает сайт. Ниже — из чего состоит защита.
@@ -29,12 +29,12 @@ const CRYPT = [
 ];
 
 const SHIELD = [
-  { t: 'HTTPS-шифрование', d: 'Сертификат с автопродлением: данные между клиентом и сайтом не перехватить.', icon: 'M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z' },
-  { t: 'Резервные копии', d: 'Ежедневно и автоматически. Если что-то случится — вернём сайт и данные из копии.', icon: 'M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3Zm0 0v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3' },
-  { t: 'Закрытая админ-панель', d: 'Скрытый адрес, стойкие пароли, блокировка после неудачных попыток входа.', icon: 'M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z' },
-  { t: 'Защита от перебора и спама', d: 'Ограничиваем частоту запросов, проверяем формы — боты и подбор паролей не проходят.', icon: 'M4 12h4l2-6 4 12 2-6h4' },
-  { t: 'Обновления и мониторинг', d: 'Следим за уязвимостями в библиотеках и за доступностью сайта, вовремя обновляем.', icon: 'M3 12a9 9 0 1 0 3-6.7M3 4v4h4M12 8v4l3 2' },
-  { t: 'Персональные данные', d: 'Согласия, политика и хранение данных клиентов — по требованиям 152-ФЗ.', icon: 'M8 7a4 4 0 1 0 8 0 4 4 0 0 0-8 0M4 21c0-4 3.6-7 8-7s8 3 8 7' },
+  { t: 'HTTPS', d: 'Сертификат с автопродлением: данные между покупателем и сайтом не перехватить.' },
+  { t: 'Резервные копии', d: 'Каждый день, автоматически. Если что-то случится — вернём сайт и данные из копии.' },
+  { t: 'Вход в админку', d: 'Пароль и код из Telegram, блокировка после неверных попыток, уведомление о каждом входе.' },
+  { t: 'Защита от ботов', d: 'Ограничиваем частоту запросов и проверяем формы — подбор паролей и спам не проходят.' },
+  { t: 'Обновления', d: 'Следим за уязвимостями в библиотеках и за доступностью сайта, вовремя обновляем.' },
+  { t: 'Персональные данные', d: 'Согласия, политика и хранение данных клиентов — по требованиям 152-ФЗ.' },
 ];
 
 const PRODUCTS = [
@@ -47,7 +47,7 @@ const PRODUCTS = [
 const Store: React.FC<{ broken: boolean }> = ({ broken }) => (
   <div className={`h-full bg-[#f6f4ef] text-[#1b1a17] transition-[filter] duration-300 ${broken ? 'sec-corrupt' : ''}`}>
     <div className="flex items-center justify-between border-b border-black/10 px-5 py-3 sm:px-7">
-      <div className="font-display text-[15px] font-semibold tracking-tight">Север · техника</div>
+      <div className="font-head text-[15px] font-semibold tracking-tight">Север · техника</div>
       <div className="hidden gap-5 text-[12px] font-medium text-black/60 sm:flex">
         <span>Каталог</span>
         <span>Доставка</span>
@@ -57,8 +57,8 @@ const Store: React.FC<{ broken: boolean }> = ({ broken }) => (
     </div>
     <div className="grid gap-4 p-5 sm:grid-cols-[1.2fr_1fr] sm:p-7">
       <div className="flex flex-col justify-center">
-        <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-black/50">Новинки недели</div>
-        <div className="mt-2 font-display text-[26px] font-semibold leading-[1.05] tracking-tight sm:text-[34px]">Ноутбуки и смартфоны с доставкой сегодня</div>
+        <div className="text-[12px] text-black/50">Новинки недели</div>
+        <div className="mt-2 font-head text-[26px] font-semibold leading-[1.05] tracking-tight sm:text-[34px]">Ноутбуки и смартфоны с доставкой сегодня</div>
         <div className="mt-4 flex gap-2">
           <span className="rounded-full bg-black px-4 py-2 text-[12px] font-semibold text-white">Смотреть каталог</span>
           <span className="rounded-full border border-black/15 px-4 py-2 text-[12px] font-semibold">Trade-in</span>
@@ -123,43 +123,37 @@ const Security: React.FC = () => {
   const locked = phase === 'ransom' || phase === 'rescue';
 
   return (
-    <section id="security" className="relative mx-auto max-w-[1500px] px-5 py-28 sm:px-10 sm:py-36">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <Eyebrow n="06">Защита</Eyebrow>
-          <h2 className="mt-8 font-display text-[12vw] font-semibold leading-[0.9] tracking-[-0.04em] sm:text-[8vw] lg:text-[5.6vw]">
-            <SplitReveal text="Если на сайт" /> <br className="hidden sm:block" />
-            <SplitReveal text="нападут" delay={0.2} aurora />
-          </h2>
-        </div>
-        <p className="max-w-sm text-[15px] leading-relaxed text-haze sm:text-[17px]">
-          Посмотрите, что происходит, когда магазин атакует вирус-вымогатель, — и как мы возвращаем сайт за минуты.
-        </p>
+    <section id="security" className="relative mx-auto max-w-[1500px] px-5 py-32 sm:px-10 sm:py-48">
+      <div className="max-w-4xl">
+        <h2 className="font-head text-[11vw] font-semibold leading-[0.95] tracking-[-0.045em] sm:text-[7vw] lg:text-[4.6vw]">
+          <Rise text="Что будет," />
+          <br />
+          <Rise text="если на сайт нападут" delay={0.12} />
+        </h2>
+        <Up as="p" delay={0.2} className="mt-6 max-w-xl text-[17px] leading-[1.55] text-haze">
+          Обычный магазин атакует вирус-вымогатель. Посмотрите, как это выглядит и как мы возвращаем сайт за минуты.
+        </Up>
       </div>
 
-      <div className="relative mx-auto mt-12 max-w-5xl">
-        <div className="overflow-hidden rounded-[22px] border border-white/15 bg-[#111018] shadow-[0_40px_120px_-40px_rgba(0,0,0,.9)]">
-          <div className="flex items-center gap-2 border-b border-white/10 bg-[#16151f] px-4 py-2.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-            <div className={`mx-auto flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-[11px] transition-colors ${locked || broken ? 'bg-[#3a0f14] text-[#ff8a84]' : 'bg-white/[0.06] text-white/60'}`}>
+      <div className="relative mt-14">
+        <div className="overflow-hidden rounded-[6px] bg-night">
+          <div className="flex items-center px-4 py-2.5">
+            <div className={`mx-auto flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] transition-colors ${locked || broken ? 'bg-[#3a0f14] text-[#ff8a84]' : 'bg-white/[0.06] text-white/60'}`}>
               <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <rect x="5" y="11" width="14" height="9" rx="2" />
                 <path d="M8 11V8a4 4 0 0 1 8 0v3" />
               </svg>
               {locked || broken ? 'небезопасно · sever-shop.ru' : 'sever-shop.ru'}
             </div>
-            <span className="hidden font-mono text-[10px] uppercase tracking-[0.18em] text-white/35 sm:block">демонстрация</span>
           </div>
 
-          <div className="relative h-[460px] overflow-hidden sm:h-[500px]">
+          <div className="relative h-[460px] overflow-hidden sm:h-[540px]">
             {phase === 'idle' ? (
-              <div className="grid h-full place-items-center bg-[#0d0c15]">
+              <div className="grid h-full place-items-center bg-night">
                 <div className="text-center">
-                  <div className="font-display text-2xl font-semibold">Обычный интернет-магазин</div>
+                  <div className="font-head text-2xl font-semibold">Обычный интернет-магазин</div>
                   <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-haze">Откройте его — и посмотрите, что будет дальше.</p>
-                  <button onClick={run} className="mt-6 rounded-full bg-lime px-8 py-3.5 font-display text-[16px] font-semibold text-void">
+                  <button onClick={run} className="mt-6 rounded-full bg-lime px-8 py-3.5 font-head text-[16px] font-semibold text-void">
                     Открыть сайт
                   </button>
                 </div>
@@ -206,7 +200,7 @@ const Security: React.FC = () => {
                         <path d="M8 11V7a4 4 0 0 1 8 0v4M12 15v2" />
                       </svg>
                     </div>
-                    <div className="sec-glitch mt-5 font-display text-[28px] font-bold uppercase leading-none tracking-tight text-[#ff4d5e] sm:text-[44px]" data-text="Ваш сайт зашифрован">
+                    <div className="sec-glitch mt-5 font-head text-[28px] font-bold uppercase leading-none tracking-tight text-[#ff4d5e] sm:text-[44px]" data-text="Ваш сайт зашифрован">
                       Ваш сайт зашифрован
                     </div>
                     <p className="mx-auto mt-4 max-w-md text-[14px] leading-relaxed text-[#f3c9cc]">Каталог, заказы и данные клиентов заблокированы. Чтобы получить ключ, переведите 2 BTC до окончания таймера.</p>
@@ -239,7 +233,7 @@ const Security: React.FC = () => {
                       ))}
                     </div>
                     <div>
-                      <div className="font-display text-[15px] font-semibold text-lime">Мир сайтов на связи</div>
+                      <div className="font-head text-[15px] font-semibold text-lime">Мир сайтов на связи</div>
                       <div className="text-[11px] text-haze">дежурная команда · реагирование</div>
                     </div>
                   </div>
@@ -288,46 +282,34 @@ const Security: React.FC = () => {
           {phase === 'safe' ? (
             <>
               <span className="text-[15px] text-mist">Сайт снова работает, данные клиентов на месте.</span>
-              <button onClick={run} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-bold hover:border-white/50">
+              <button onClick={run} className="rounded-full bg-night px-5 py-2.5 text-[14px] font-semibold hover:bg-mist hover:text-void">
                 Повторить атаку
               </button>
             </>
           ) : phase !== 'idle' ? (
-            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-haze">
+            <span className="text-[15px] text-haze">
               {phase === 'loading' || phase === 'site' ? 'Открываем сайт' : phase === 'attack' ? 'Идёт атака' : phase === 'ransom' ? 'Сайт захвачен' : 'Устраняем угрозу'}
             </span>
           ) : null}
         </div>
       </div>
 
-      {/* из чего состоит защита */}
-      <div className="mt-24">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <h3 className="max-w-2xl font-display text-4xl font-semibold leading-[1.02] tracking-tight sm:text-5xl">Каждый наш сайт защищён с первого дня</h3>
-          <Magnetic>
-            <button onClick={() => scrollToId('contact')} className="rounded-full bg-mist px-6 py-3.5 font-bold text-void">
-              Проверить мой сайт
-            </button>
-          </Magnetic>
+      {/* из чего состоит защита: обычный список, без иконок и карточек */}
+      <div className="mt-32 grid gap-x-10 gap-y-12 lg:grid-cols-12">
+        <div className="lg:col-span-4">
+          <h3 className="font-head text-[40px] font-semibold leading-[1] tracking-[-0.035em] sm:text-[52px]">Защищаем с первого дня</h3>
+          <button onClick={() => scrollToId('contact')} className="mt-8 rounded-full bg-lime px-6 py-3.5 text-[15px] font-semibold text-void transition-colors hover:bg-mist">
+            Проверить мой сайт
+          </button>
         </div>
-        <div className="mt-10 grid gap-px overflow-hidden rounded-[24px] border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
-          {SHIELD.map((s, i) => (
-            <motion.div
-              key={s.t}
-              className="bg-void p-6 sm:p-7"
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-10% 0px' }}
-              transition={{ duration: 0.7, delay: (i % 3) * 0.08, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <svg viewBox="0 0 24 24" className="h-7 w-7 text-lime" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d={s.icon} />
-              </svg>
-              <div className="mt-5 font-display text-xl font-semibold tracking-tight">{s.t}</div>
-              <p className="mt-2 text-[14px] leading-relaxed text-haze">{s.d}</p>
-            </motion.div>
+        <dl className="grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:col-span-8">
+          {SHIELD.map((x, i) => (
+            <Up key={x.t} delay={(i % 2) * 0.07}>
+              <dt className="text-[22px] font-semibold tracking-[-0.02em]">{x.t}</dt>
+              <dd className="mt-2 max-w-sm text-[16px] leading-[1.55] text-haze">{x.d}</dd>
+            </Up>
           ))}
-        </div>
+        </dl>
       </div>
     </section>
   );

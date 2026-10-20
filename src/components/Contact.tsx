@@ -1,8 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { CONTACTS, TEAM } from '../data';
-import Chibi from './Chibi';
-import { Arrow, Eyebrow, Magnetic } from './ui';
+import { CONTACTS } from '../data';
+import { Arrow, Rise, Up } from './ui';
 
 // Финал: бриф в пять шагов — справа сразу собирается готовое сообщение. Ниже — что будет дальше и частые вопросы.
 const TYPES = ['Интернет-магазин', 'Промо-сайт', 'Лендинг', 'Telegram Mini App', '3D-сайт', 'Корпоративный сайт', 'Пока не знаю'];
@@ -30,14 +29,13 @@ const Chip: React.FC<{ on: boolean; onClick: () => void; children: React.ReactNo
     type="button"
     onClick={onClick}
     aria-pressed={on}
-    className={`rounded-full border px-4 py-2.5 text-[14px] font-semibold transition-all duration-300 ${on ? 'border-lime bg-lime text-void' : 'border-white/15 hover:border-white/40'}`}
+    className={`rounded-full px-4 py-2.5 text-[15px] font-medium transition-colors duration-300 ${on ? 'bg-lime text-void' : 'bg-white/[0.06] hover:bg-white/[0.12]'}`}
   >
     {children}
   </button>
 );
 
 const Contact: React.FC = () => {
-  const title = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(0);
   const [types, setTypes] = useState<string[]>([]);
   const [features, setFeatures] = useState<string[]>([]);
@@ -49,13 +47,6 @@ const Contact: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [faq, setFaq] = useState<number | null>(0);
 
-  const move = (e: React.PointerEvent) => {
-    const el = title.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    el.style.setProperty('--x', `${((e.clientX - r.left) / r.width) * 100}%`);
-    el.style.setProperty('--y', `${((e.clientY - r.top) / r.height) * 100}%`);
-  };
   const toggle = (list: string[], set: (v: string[]) => void, t: string) => set(list.includes(t) ? list.filter((x) => x !== t) : [...list, t]);
 
   const brief = [
@@ -83,49 +74,35 @@ const Contact: React.FC = () => {
   const hasContacts = !!(CONTACTS.telegram || CONTACTS.email || CONTACTS.phone);
 
   return (
-    <section id="contact" className="relative overflow-hidden py-28 sm:py-40" onPointerMove={move}>
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[80%] bg-[radial-gradient(45%_40%_at_50%_45%,rgba(139,108,255,.2),transparent_75%)]" />
+    <section id="contact" className="relative py-32 sm:py-48">
       <div className="relative mx-auto max-w-[1500px] px-5 sm:px-10">
-        <Eyebrow n="07">Контакты</Eyebrow>
-        <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div
-            ref={title}
-            className="font-display text-[15vw] font-semibold leading-[0.86] tracking-[-0.045em] sm:text-[11vw] lg:text-[8.5vw]"
-            style={{
-              background: 'radial-gradient(28% 45% at var(--x,50%) var(--y,50%), #c8ff4d, #3ee6ff 35%, #8b6cff 60%, rgba(236,233,255,.92) 85%)',
-              WebkitBackgroundClip: 'text',
-              backgroundClip: 'text',
-              color: 'transparent',
-            }}
-          >
-            Создадим
+        <div className="grid gap-8 lg:grid-cols-12 lg:items-end">
+          <h2 className="font-head text-[15vw] font-semibold leading-[0.9] tracking-[-0.055em] sm:text-[11vw] lg:col-span-8 lg:text-[8.5vw]">
+            <Rise text="Создадим" />
             <br />
-            ваш мир?
-          </div>
-          <div className="flex items-end gap-1">
-            {TEAM.map((m, i) => (
-              <Chibi key={m.id} m={m} size={84} mode={filled >= 5 ? 'cheer' : 'idle'} className={i === 1 ? 'mb-3' : ''} />
-            ))}
-          </div>
+            <Rise text="ваш мир?" delay={0.12} />
+          </h2>
+          <Up as="p" delay={0.2} className="max-w-md text-[17px] leading-[1.55] text-haze lg:col-span-4">
+            Ответьте на пять коротких вопросов — справа соберётся готовое сообщение. Его останется отправить нам.
+          </Up>
         </div>
 
         <div className="mt-14 grid gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
           {/* шаги брифа */}
-          <div className="rounded-[28px] border border-white/10 bg-night/70 p-5 sm:p-7">
+          <div className="rounded-[6px] bg-night p-5 sm:p-8">
             <div className="flex flex-wrap gap-1.5">
               {STEPS.map((s, i) => (
                 <button
                   key={s}
                   onClick={() => setStep(i)}
-                  className={`flex items-center gap-2 rounded-full px-3.5 py-2 text-[12px] font-bold transition-colors ${step === i ? 'bg-mist text-void' : 'text-haze hover:text-mist'}`}
+                  className={`rounded-full px-4 py-2 text-[14px] font-medium transition-colors ${step === i ? 'bg-mist text-void' : 'text-haze hover:text-mist'}`}
                 >
-                  <span className={`grid h-5 w-5 place-items-center rounded-full text-[10px] ${step === i ? 'bg-void text-mist' : 'bg-white/10'}`}>{i + 1}</span>
                   {s}
                 </button>
               ))}
             </div>
-            <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
-              <motion.div className="h-full rounded-full bg-gradient-to-r from-violet via-cyan to-lime" animate={{ width: `${(filled / 5) * 100}%` }} />
+            <div className="mt-3 h-1 overflow-hidden bg-white/10">
+              <motion.div className="h-full bg-lime" animate={{ width: `${(filled / 5) * 100}%` }} />
             </div>
 
             <AnimatePresence mode="wait">
@@ -168,66 +145,62 @@ const Contact: React.FC = () => {
                 )}
                 {step === 4 && (
                   <div className="grid gap-3">
-                    <div className="font-display text-2xl font-semibold">Пара слов о вас</div>
-                    <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Как вас зовут" className="rounded-2xl border border-white/15 bg-white/[0.04] px-4 py-3.5 text-[15px] outline-none focus:border-lime" />
-                    <input value={contact} onChange={(e) => setContact(e.target.value)} placeholder="Telegram или телефон для ответа" className="rounded-2xl border border-white/15 bg-white/[0.04] px-4 py-3.5 text-[15px] outline-none focus:border-lime" />
-                    <textarea value={about} onChange={(e) => setAbout(e.target.value)} rows={3} placeholder="О проекте: чем занимаетесь, что нравится, примеры сайтов" className="resize-none rounded-2xl border border-white/15 bg-white/[0.04] px-4 py-3.5 text-[15px] outline-none focus:border-lime" />
+                    <div className="font-head text-2xl font-semibold">Пара слов о вас</div>
+                    <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Как вас зовут" className="rounded-[6px] bg-white/[0.06] px-4 py-3.5 text-[16px] outline-none focus:bg-white/[0.1] focus:ring-2 focus:ring-lime" />
+                    <input value={contact} onChange={(e) => setContact(e.target.value)} placeholder="Telegram или телефон для ответа" className="rounded-[6px] bg-white/[0.06] px-4 py-3.5 text-[16px] outline-none focus:bg-white/[0.1] focus:ring-2 focus:ring-lime" />
+                    <textarea value={about} onChange={(e) => setAbout(e.target.value)} rows={3} placeholder="О проекте: чем занимаетесь, что нравится, примеры сайтов" className="resize-none rounded-[6px] bg-white/[0.06] px-4 py-3.5 text-[16px] outline-none focus:bg-white/[0.1] focus:ring-2 focus:ring-lime" />
                   </div>
                 )}
               </motion.div>
             </AnimatePresence>
 
             <div className="mt-6 flex items-center justify-between">
-              <button onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0} className="rounded-full border border-white/15 px-5 py-2.5 text-[14px] font-bold disabled:opacity-30">
+              <button onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0} className="rounded-full bg-white/[0.06] px-5 py-2.5 text-[15px] font-medium disabled:opacity-30">
                 ← Назад
               </button>
               {step < STEPS.length - 1 ? (
-                <button onClick={() => setStep((s) => s + 1)} className="rounded-full bg-mist px-6 py-2.5 text-[14px] font-bold text-void">
+                <button onClick={() => setStep((s) => s + 1)} className="rounded-full bg-mist px-6 py-2.5 text-[15px] font-semibold text-void">
                   Дальше →
                 </button>
               ) : (
-                <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-lime">готово — отправьте справа</span>
+                <span className="text-[15px] text-lime">Готово — отправьте сообщение</span>
               )}
             </div>
           </div>
 
           {/* письмо */}
-          <div className="flex flex-col gap-6 rounded-[28px] border border-white/10 bg-[#0d0c15] p-6 sm:p-8">
+          <div className="flex flex-col gap-6 rounded-[6px] bg-mist p-6 text-void sm:p-8">
             <div>
-              <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.25em] text-haze">
+              <div className="flex items-center justify-between text-[14px] text-void/60">
                 <span>Ваше сообщение</span>
                 <span>
                   {filled}/5
                 </span>
               </div>
-              <motion.pre layout className="mt-4 min-h-[160px] whitespace-pre-wrap font-sans text-[16px] leading-relaxed text-mist">
+              <motion.pre layout className="mt-4 min-h-[160px] whitespace-pre-wrap font-sans text-[18px] leading-[1.5] text-void">
                 {brief}
               </motion.pre>
             </div>
             <div className="mt-auto flex flex-wrap gap-3">
               {CONTACTS.telegram && (
-                <Magnetic>
-                  <a href={CONTACTS.telegram} target="_blank" rel="noreferrer" onClick={copy} className="flex items-center gap-2 rounded-full bg-lime px-6 py-3.5 font-bold text-void">
+                <a href={CONTACTS.telegram} target="_blank" rel="noreferrer" onClick={copy} className="flex items-center gap-2 rounded-full bg-void px-6 py-3.5 font-semibold text-mist">
                     Написать в Telegram <Arrow />
                   </a>
-                </Magnetic>
               )}
               {CONTACTS.email && (
-                <Magnetic>
                   <a
                     href={`mailto:${CONTACTS.email}?subject=${encodeURIComponent('Хочу сайт')}&body=${encodeURIComponent(brief)}`}
-                    className="flex items-center gap-2 rounded-full border border-white/20 px-6 py-3.5 font-bold hover:border-white/50"
+                    className="flex items-center gap-2 rounded-full px-6 py-3.5 font-semibold ring-1 ring-inset ring-void/25 hover:ring-void/60"
                   >
                     На почту <Arrow />
                   </a>
-                </Magnetic>
               )}
               {CONTACTS.phone && (
-                <a href={`tel:${CONTACTS.phone.replace(/[^\d+]/g, '')}`} className="flex items-center rounded-full border border-white/20 px-6 py-3.5 font-bold hover:border-white/50">
+                <a href={`tel:${CONTACTS.phone.replace(/[^\d+]/g, '')}`} className="flex items-center rounded-full px-6 py-3.5 font-semibold ring-1 ring-inset ring-void/25 hover:ring-void/60">
                   {CONTACTS.phone}
                 </a>
               )}
-              <button onClick={copy} className={`rounded-full px-6 py-3.5 font-bold ${hasContacts ? 'border border-white/20 hover:border-white/50' : 'bg-lime text-void'}`}>
+              <button onClick={copy} className={`rounded-full px-6 py-3.5 font-semibold ${hasContacts ? 'ring-1 ring-inset ring-void/25 hover:ring-void/60' : 'bg-void text-mist'}`}>
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.span key={String(copied)} initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -10, opacity: 0 }} className="block">
                     {copied ? 'Скопировано ✓' : 'Скопировать текст'}
@@ -235,45 +208,41 @@ const Contact: React.FC = () => {
                 </AnimatePresence>
               </button>
             </div>
-            {CONTACTS.telegram && <p className="-mt-3 text-[12px] text-haze">Текст скопируется сам — останется вставить его в чат.</p>}
+            {CONTACTS.telegram && <p className="-mt-3 text-[13px] text-void/60">Текст скопируется сам — останется вставить его в чат.</p>}
           </div>
         </div>
 
         {/* что дальше + вопросы */}
-        <div className="mt-16 grid gap-10 lg:grid-cols-2 lg:gap-16">
+        <div className="mt-32 grid gap-16 lg:grid-cols-2 lg:gap-16">
           <div>
-            <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-haze">Что будет после заявки</div>
-            <ol className="mt-6 space-y-6">
+            <h3 className="font-head text-[32px] font-semibold tracking-[-0.03em]">Что будет после заявки</h3>
+            <ol className="mt-8 space-y-7">
               {NEXT.map((n, i) => (
                 <motion.li
                   key={n.t}
-                  className="flex gap-5"
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.12, duration: 0.7 }}
                 >
-                  <span className="font-display text-4xl font-semibold text-lime">0{i + 1}</span>
-                  <div>
-                    <div className="font-display text-xl font-semibold">{n.t}</div>
-                    <p className="mt-1 text-[15px] leading-relaxed text-haze">{n.d}</p>
-                  </div>
+                  <div className="text-[21px] font-semibold tracking-[-0.02em]">{n.t}</div>
+                  <p className="mt-1 max-w-md text-[16px] leading-[1.55] text-haze">{n.d}</p>
                 </motion.li>
               ))}
             </ol>
           </div>
           <div>
-            <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-haze">Частые вопросы</div>
-            <div className="mt-4 divide-y divide-white/10 border-y border-white/10">
+            <h3 className="font-head text-[32px] font-semibold tracking-[-0.03em]">Частые вопросы</h3>
+            <div className="mt-6 space-y-1">
               {FAQ.map((f, i) => (
                 <div key={f.q}>
-                  <button onClick={() => setFaq(faq === i ? null : i)} className="flex w-full items-center justify-between gap-4 py-4 text-left font-display text-lg font-semibold" aria-expanded={faq === i}>
+                  <button onClick={() => setFaq(faq === i ? null : i)} className="flex w-full items-center justify-between gap-4 rounded-[6px] bg-white/[0.04] px-5 py-4 text-left text-[18px] font-semibold transition-colors hover:bg-white/[0.08]" aria-expanded={faq === i}>
                     {f.q}
-                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/15 transition-transform duration-300 ${faq === i ? 'rotate-45 bg-lime text-void' : ''}`}>+</span>
+                    <span className={`text-[22px] leading-none transition-transform duration-300 ${faq === i ? 'rotate-45 text-lime' : 'text-haze'}`}>+</span>
                   </button>
                   <AnimatePresence initial={false}>
                     {faq === i && (
-                      <motion.p initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden pb-4 text-[15px] leading-relaxed text-haze">
+                      <motion.p initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden px-5 pb-5 pt-1 text-[16px] leading-[1.55] text-haze">
                         {f.a}
                       </motion.p>
                     )}
@@ -291,8 +260,8 @@ const Contact: React.FC = () => {
 const Field: React.FC<{ title: string; hint?: string; children: React.ReactNode }> = ({ title, hint, children }) => (
   <div>
     <div className="flex items-baseline gap-3">
-      <div className="font-display text-2xl font-semibold">{title}</div>
-      {hint && <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-haze">{hint}</span>}
+      <div className="text-[24px] font-semibold tracking-[-0.02em]">{title}</div>
+      {hint && <span className="text-[14px] text-haze">{hint}</span>}
     </div>
     <div className="mt-5 flex flex-wrap gap-2">{children}</div>
   </div>

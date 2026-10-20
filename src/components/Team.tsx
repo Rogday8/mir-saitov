@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { TEAM } from '../data';
 import RunnerGame from './RunnerGame';
-import { Eyebrow, SplitReveal } from './ui';
+import { Rise } from './ui';
 
 // «Кто делает эти миры»: 3D-карта Москвы — Москва-Сити и наша башня в разрезе.
 // На каждом этаже — один из нас, этаж оформлен под его характер. Клик по этажу — лифт и камера едут туда.
@@ -45,20 +45,21 @@ const Team: React.FC = () => {
   const member = selected !== null && selected > 0 ? TEAM[selected - 1] : null;
 
   return (
-    <section id="team" className="relative mx-auto max-w-[1500px] px-5 py-28 sm:px-10 sm:py-36">
+    <section id="team" className="relative mx-auto max-w-[1500px] px-5 py-32 sm:px-10 sm:py-48">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <Eyebrow n="04">Команда</Eyebrow>
-          <h2 className="mt-8 font-display text-[12vw] font-semibold leading-[0.9] tracking-[-0.04em] sm:text-[8vw] lg:text-[5.6vw]">
-            <SplitReveal text="Кто делает" /> <SplitReveal text="эти миры" delay={0.2} aurora />
+          <h2 className="font-head text-[11vw] font-semibold leading-[0.95] tracking-[-0.045em] sm:text-[7vw] lg:text-[4.6vw]">
+            <Rise text="Кто делает" />
+            <br />
+            <Rise text="эти миры" delay={0.12} />
           </h2>
         </div>
-        <p className="max-w-sm text-[15px] leading-relaxed text-haze">Наша башня у Москва-Сити. На каждом этаже — один из нас: нажмите на этаж, и лифт отвезёт вас в гости.</p>
+        <p className="max-w-sm text-[17px] leading-[1.55] text-haze">Наша башня у Москва-Сити. На каждом этаже — один из нас: нажмите на этаж, и лифт отвезёт вас в гости.</p>
       </div>
 
       <div ref={box} className="relative mt-12 h-[78vh] min-h-[560px] overflow-hidden rounded-[28px] border border-white/10 bg-[#0a0912]">
         {near && (
-          <Suspense fallback={<div className="grid h-full place-items-center font-mono text-[11px] uppercase tracking-[0.25em] text-haze">Загружаем город</div>}>
+          <Suspense fallback={<div className="grid h-full place-items-center text-[15px] text-haze">Загружаем город</div>}>
             <CityScene selected={selected} hovered={hovered} onHover={setHovered} onSelect={setSelected} active={active} compact={compact} />
           </Suspense>
         )}
@@ -76,7 +77,7 @@ const Team: React.FC = () => {
                 onPointerLeave={() => setHovered(null)}
                 className={`flex items-center gap-3 rounded-full border p-1.5 text-left sm:pr-4 transition-colors ${on ? 'border-white/30 bg-[#1f1d2a]' : 'border-white/10 bg-void/85 hover:border-white/25'}`}
               >
-                <span className="grid h-7 w-7 place-items-center rounded-full font-mono text-[11px] font-bold text-void" style={{ background: f.color }}>
+                <span className="grid h-7 w-7 place-items-center rounded-full text-[12px] font-bold text-void tabular-nums" style={{ background: f.color }}>
                   {i}
                 </span>
                 <span className="hidden leading-tight sm:block">
@@ -93,7 +94,7 @@ const Team: React.FC = () => {
           {selected === null ? (
             <motion.div
               key="hint"
-              className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/10 bg-void/80 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-haze"
+              className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/10 bg-void/80 px-4 py-2 text-[13px] text-haze"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
@@ -109,7 +110,7 @@ const Team: React.FC = () => {
               exit={{ opacity: 0, x: 30 }}
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="font-mono text-[11px] uppercase tracking-[0.22em]" style={{ color: FLOOR_LIST[selected].color }}>
+              <div className="text-[14px] font-medium" style={{ color: FLOOR_LIST[selected].color }}>
                 Этаж {selected} · {FLOOR_LIST[selected].title}
               </div>
               {member ? (
@@ -119,7 +120,7 @@ const Team: React.FC = () => {
                       <img src={`${base}${member.head}`} alt="" className="h-full w-full object-contain" />
                     </span>
                     <div>
-                      <div className="font-display text-2xl font-semibold leading-tight">{member.name}</div>
+                      <div className="font-head text-2xl font-semibold leading-tight">{member.name}</div>
                       <div className="text-[13px] text-haze">{member.role}</div>
                     </div>
                   </div>
@@ -127,7 +128,7 @@ const Team: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <div className="mt-3 font-display text-2xl font-semibold">Мир сайтов</div>
+                  <div className="mt-3 font-head text-2xl font-semibold">Мир сайтов</div>
                   <p className="mt-2 text-[14px] leading-relaxed text-mist/90">
                     Здесь встречаем гостей. Выше — три этажа команды: фронтенд и анимации, продюсирование, дизайн и 3D. Каждый этаж обставлен под характер того, кто на нём работает.
                   </p>

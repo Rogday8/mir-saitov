@@ -59,7 +59,7 @@ const ObjView: React.FC<{ kind: Kind }> = ({ kind }) => {
     return (
       <div className="flex h-full w-full flex-col justify-end gap-[3px]">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="grid flex-1 place-items-center rounded-[4px] border border-white/30 bg-[#5d48c9] font-mono text-[9px] font-bold text-white/90" style={{ marginLeft: i % 2 ? 3 : 0 }}>
+          <div key={i} className="grid flex-1 place-items-center rounded-[4px] border border-white/30 bg-[#3a3a40] font-mono text-[9px] font-bold text-white/90" style={{ marginLeft: i % 2 ? 3 : 0 }}>
             ТЗ
           </div>
         ))}
@@ -265,8 +265,8 @@ const RunnerGame: React.FC = () => {
     <div className="mt-16">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-lime">мини-игра · с нашими героями</div>
-          <h3 className="mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">Убеги от дедлайна</h3>
+          
+          <h3 className="font-head text-[40px] font-semibold leading-[1] tracking-[-0.035em] sm:text-[56px]">Убеги от дедлайна</h3>
         </div>
         <p className="max-w-sm text-[14px] leading-relaxed text-haze">Прыгайте через ошибки и стопки ТЗ, пробегайте под дедлайнами, собирайте кофе и звёзды. Наберите очки — получите скидку на сайт.</p>
       </div>
@@ -280,7 +280,7 @@ const RunnerGame: React.FC = () => {
           jump();
         }}
         data-hover=""
-        className="relative mt-6 h-[360px] touch-none select-none overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,#0d0a24_0%,#1b1340_60%,#2a1b55_100%)] sm:h-[380px]"
+        className="relative mt-6 h-[360px] touch-none select-none overflow-hidden rounded-[6px] bg-night sm:h-[380px]"
       >
         {/* звёзды и город */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,.5)_1px,transparent_1.5px)] opacity-40 [background-size:46px_46px]" />
@@ -289,7 +289,7 @@ const RunnerGame: React.FC = () => {
           className="pointer-events-none absolute inset-x-0 bottom-[60px] h-[150px] opacity-70"
           style={{
             backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='150'%3E%3Cg fill='%23382a6e'%3E%3Crect x='0' y='60' width='50' height='90'/%3E%3Crect x='55' y='20' width='40' height='130'/%3E%3Crect x='100' y='80' width='60' height='70'/%3E%3Crect x='165' y='40' width='34' height='110'/%3E%3Crect x='204' y='95' width='70' height='55'/%3E%3Crect x='280' y='10' width='46' height='140'/%3E%3Crect x='330' y='70' width='55' height='80'/%3E%3Crect x='390' y='45' width='40' height='105'/%3E%3Crect x='434' y='90' width='46' height='60'/%3E%3C/g%3E%3Cg fill='%23c8ff4d' opacity='.5'%3E%3Crect x='64' y='34' width='4' height='4'/%3E%3Crect x='76' y='54' width='4' height='4'/%3E%3Crect x='290' y='30' width='4' height='4'/%3E%3Crect x='306' y='60' width='4' height='4'/%3E%3Crect x='174' y='60' width='4' height='4'/%3E%3Crect x='400' y='70' width='4' height='4'/%3E%3C/g%3E%3C/svg%3E\")",
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='150'%3E%3Cg fill='%23232326'%3E%3Crect x='0' y='60' width='50' height='90'/%3E%3Crect x='55' y='20' width='40' height='130'/%3E%3Crect x='100' y='80' width='60' height='70'/%3E%3Crect x='165' y='40' width='34' height='110'/%3E%3Crect x='204' y='95' width='70' height='55'/%3E%3Crect x='280' y='10' width='46' height='140'/%3E%3Crect x='330' y='70' width='55' height='80'/%3E%3Crect x='390' y='45' width='40' height='105'/%3E%3Crect x='434' y='90' width='46' height='60'/%3E%3C/g%3E%3Cg fill='%23c8ff4d' opacity='.5'%3E%3Crect x='64' y='34' width='4' height='4'/%3E%3Crect x='76' y='54' width='4' height='4'/%3E%3Crect x='290' y='30' width='4' height='4'/%3E%3Crect x='306' y='60' width='4' height='4'/%3E%3Crect x='174' y='60' width='4' height='4'/%3E%3Crect x='400' y='70' width='4' height='4'/%3E%3C/g%3E%3C/svg%3E\")",
             backgroundRepeat: 'repeat-x',
             backgroundSize: '480px 150px',
           }}
@@ -297,7 +297,7 @@ const RunnerGame: React.FC = () => {
         {/* земля */}
         <div
           ref={groundEl}
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[60px] border-t-2 border-lime/70 bg-[#120d2a]"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[60px] border-t-2 border-lime/70 bg-[#101012]"
           style={{ backgroundImage: 'repeating-linear-gradient(90deg, rgba(200,255,77,.25) 0 26px, transparent 26px 64px)', backgroundSize: '64px 2px', backgroundRepeat: 'repeat-x', backgroundPosition: '0 14px' }}
         />
         {slow && <div className="pointer-events-none absolute inset-0 bg-[#ffd66b]/10" />}
@@ -325,14 +325,14 @@ const RunnerGame: React.FC = () => {
 
         {/* счёт */}
         {state === 'play' && (
-          <div className="absolute right-4 top-4 flex items-center gap-4 font-mono text-[13px] text-haze">
+          <div className="absolute right-4 top-4 flex items-center gap-4 text-[14px] text-haze">
             {slow && (
               <span className="flex items-center gap-1.5 text-[#ffd66b]">
                 <CoffeeIcon className="h-4 w-4" /> замедление
               </span>
             )}
             <span>
-              очки <span ref={scoreEl} className="font-display text-xl font-semibold text-mist">0</span>
+              очки <span ref={scoreEl} className="font-head text-xl font-semibold text-mist">0</span>
             </span>
           </div>
         )}
@@ -343,7 +343,7 @@ const RunnerGame: React.FC = () => {
             <motion.div className="absolute inset-0 z-10 flex items-center justify-center bg-void/70 p-4 backdrop-blur-[2px]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               {state === 'menu' ? (
                 <div className="flex w-full max-w-2xl flex-col items-center text-center">
-                  <div className="font-display text-xl font-semibold">Выберите героя</div>
+                  <div className="font-head text-xl font-semibold">Выберите героя</div>
                   <div className="mt-4 grid w-full grid-cols-3 gap-2 sm:gap-3">
                     {TEAM.map((m) => (
                       <button
@@ -353,23 +353,23 @@ const RunnerGame: React.FC = () => {
                         style={{ borderColor: who.id === m.id ? m.color : undefined }}
                       >
                         <img src={`${import.meta.env.BASE_URL}${m.head}`} alt="" className="h-14 w-14 object-contain sm:h-16 sm:w-16" />
-                        <span className="mt-1 font-display text-[13px] font-semibold sm:text-[15px]" style={{ color: m.color }}>
+                        <span className="mt-1 font-head text-[13px] font-semibold sm:text-[15px]" style={{ color: m.color }}>
                           {m.name}
                         </span>
                         <span className="text-[10px] leading-tight text-haze sm:text-[11px]">{PERKS[m.id].label}</span>
                       </button>
                     ))}
                   </div>
-                  <button onClick={start} className="mt-5 rounded-full bg-lime px-9 py-3.5 font-display text-lg font-semibold text-void">
+                  <button onClick={start} className="mt-5 rounded-full bg-lime px-9 py-3.5 font-head text-lg font-semibold text-void">
                     Бежать!
                   </button>
-                  <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.2em] text-haze">пробел / клик / тап — прыжок · два раза — двойной</div>
+                  <div className="mt-3 text-[13px] text-haze">Пробел, клик или тап — прыжок. Дважды — двойной прыжок</div>
                 </div>
               ) : (
                 <div className="grid w-full max-w-3xl items-center gap-5 sm:grid-cols-[1fr_1fr]">
                   <div className="text-center sm:text-left">
-                    <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-haze">{score >= best && score > 0 ? 'новый рекорд!' : 'дедлайн догнал'}</div>
-                    <div className="font-display text-6xl font-bold">
+                    <div className="text-[15px] text-haze">{score >= best && score > 0 ? 'Новый рекорд' : 'Дедлайн догнал'}</div>
+                    <div className="font-head text-6xl font-bold">
                       <span className="text-aurora">{score}</span>
                     </div>
                     {promo ? (
@@ -399,17 +399,17 @@ const RunnerGame: React.FC = () => {
                     </div>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-night/80 p-4">
-                    <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-haze">лучшие забеги</div>
+                    <div className="text-[15px] text-haze">Лучшие забеги</div>
                     <ol className="mt-3 space-y-2">
                       {top.length === 0 && <li className="text-[13px] text-haze">Пока пусто — станьте первым!</li>}
                       {top.map((r, i) => {
                         const m = TEAM.find((x) => x.id === r.who) || TEAM[0];
                         return (
                           <li key={i} className="flex items-center gap-3">
-                            <span className="w-4 font-mono text-[12px] text-haze">{i + 1}</span>
+                            <span className="w-4 text-[13px] tabular-nums text-haze">{i + 1}</span>
                             <img src={`${import.meta.env.BASE_URL}${m.head}`} alt="" className="h-7 w-7 object-contain" />
                             <span className="flex-1 truncate text-[14px]">{r.name}</span>
-                            <span className="font-display font-semibold" style={{ color: m.color }}>
+                            <span className="font-head font-semibold" style={{ color: m.color }}>
                               {r.score}
                             </span>
                           </li>

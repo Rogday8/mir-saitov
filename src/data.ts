@@ -165,3 +165,6 @@ export const PERKS: Record<string, { label: string; jump: number; coffee: number
   b: { label: 'Кофе действует вдвое дольше', jump: 1, coffee: 2, shield: 0 },
   c: { label: 'Переживает одно столкновение', jump: 1, coffee: 1, shield: 1 },
 };
+
+/** Авторы 3D-моделей со Sketchfab (лицензия CC BY 4.0 — обязательно указывать). Показываются в подвале. */
+export const CREDITS: { name: string; author: string; url: string }[] = [];
