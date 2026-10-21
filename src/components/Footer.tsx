@@ -24,7 +24,7 @@ const Footer: React.FC = () => (
     </div>
     <div className="mx-auto flex max-w-[1500px] flex-col gap-3 px-5 pb-8 text-[13px] text-haze/80 sm:flex-row sm:items-end sm:justify-between sm:px-10">
       <div className="max-w-3xl">
-        <span>© {new Date().getFullYear()} Мир сайтов.</span>
+        <span>© {new Date().getFullYear()} Мир сайтов. Все права защищены: код, дизайн и тексты сайта нельзя копировать без нашего разрешения.</span>
         {CREDITS.length > 0 && (
           <span>
             {' '}3D-модели:{' '}

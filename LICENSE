@@ -1,0 +1,30 @@
+Copyright (c) 2026 «Мир сайтов». Все права защищены.
+
+Исходный код, дизайн, тексты, изображения, видео и прочие материалы этого
+репозитория и сайта https://rogday8.github.io/mir-saitov/ принадлежат
+студии «Мир сайтов».
+
+Без письменного разрешения правообладателя запрещено копировать,
+изменять, распространять, публиковать, продавать или использовать
+эти материалы целиком или частично, в том числе для создания похожих сайтов.
+
+Просмотр сайта и исходного кода на GitHub не даёт никаких прав
+на их использование.
+
+Исключение — 3D-модели в папке public/city/. Это работы других авторов,
+они распространяются по лицензии Creative Commons Attribution 4.0
+(CC BY 4.0) и используются с указанием авторов (список — в подвале сайта
+и в src/data.ts, CREDITS).
+
+---
+
+Copyright (c) 2026 Mir Saitov. All rights reserved.
+
+The source code, design, texts, images, videos and other materials in this
+repository and on https://rogday8.github.io/mir-saitov/ are the property of
+Mir Saitov. No part of them may be copied, modified, distributed, published,
+sold or otherwise used without prior written permission of the copyright holder.
+
+Exception: the 3D models in public/city/ are third-party works licensed under
+CC BY 4.0 and are used with attribution (see the site footer and CREDITS in
+src/data.ts).
