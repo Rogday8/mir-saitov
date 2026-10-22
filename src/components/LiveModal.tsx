@@ -55,8 +55,8 @@ const LiveModal: React.FC<{ work: Work | null; onClose: () => void }> = ({ work,
           <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-8 sm:py-5">
             <div className="flex items-center gap-3">
               <span className="h-3 w-3 rounded-full" style={{ background: work.accent }} />
-              <span className="font-head text-lg font-semibold">{work.name}</span>
-              
+              <span className="font-display text-lg font-semibold">{work.name}</span>
+              <span className="hidden font-mono text-[11px] uppercase tracking-[0.2em] text-haze sm:inline">вживую</span>
             </div>
             <div className="order-3 flex w-full justify-center sm:order-none sm:w-auto">
               <div className="relative flex rounded-full border border-white/15 p-1">
@@ -87,10 +87,10 @@ const LiveModal: React.FC<{ work: Work | null; onClose: () => void }> = ({ work,
               className={`relative overflow-hidden bg-white shadow-[0_40px_140px_-30px_rgba(0,0,0,.9)] transition-[box-shadow] ${device === 'phone' ? 'ring-[6px] ring-[#1d1c26]' : 'ring-1 ring-white/15'}`}
             >
               {!loaded && (
-                <div className="absolute inset-0 grid place-items-center bg-night">
+                <div className="absolute inset-0 grid place-items-center bg-[#0e0c17]">
                   <div className="flex flex-col items-center gap-4">
                     <span className="h-10 w-10 animate-spin rounded-full border-2 border-white/15 border-t-lime" />
-                    <span className="text-[15px] text-haze">Загружаем сайт</span>
+                    <span className="font-mono text-[11px] uppercase tracking-[0.25em] text-haze">Загружаем сайт</span>
                   </div>
                 </div>
               )}
@@ -105,7 +105,7 @@ const LiveModal: React.FC<{ work: Work | null; onClose: () => void }> = ({ work,
               />
             </motion.div>
           </div>
-          <p className="pb-4 text-center text-[13px] text-haze">Это настоящий сайт — можно листать и нажимать</p>
+          <p className="pb-4 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-haze/70">Это настоящий сайт — можно листать и нажимать</p>
         </motion.div>
       )}
     </AnimatePresence>

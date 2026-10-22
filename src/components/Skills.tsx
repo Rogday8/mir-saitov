@@ -1,13 +1,39 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, animate, motion, useInView, useMotionValue, useSpring } from 'motion/react';
 import { finePointer } from '../lib/smooth';
-import { Rise, Up } from './ui';
+import { Eyebrow, Reveal, SplitReveal, auroraLetter } from './ui';
 
-const base = import.meta.env.BASE_URL;
+// Плитка с «прожектором» за курсором
+const Tile: React.FC<{ className?: string; title: string; text: string; children: React.ReactNode; tag: string }> = ({ className = '', title, text, children, tag }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const move = (e: React.PointerEvent) => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--mx', `${e.clientX - r.left}px`);
+    el.style.setProperty('--my', `${e.clientY - r.top}px`);
+  };
+  return (
+    <div
+      ref={ref}
+      onPointerMove={move}
+      className={`group relative flex flex-col overflow-hidden rounded-[28px] border border-white/10 bg-night/80 p-6 sm:p-7 ${className}`}
+    >
+      <div
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        style={{ background: 'radial-gradient(420px circle at var(--mx) var(--my), rgba(139,108,255,.16), transparent 60%)' }}
+      />
+      <div className="relative flex min-h-[190px] flex-1 items-center justify-center">{children}</div>
+      <div className="relative mt-6">
+        <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.25em] text-lime">{tag}</div>
+        <h3 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">{title}</h3>
+        <p className="mt-2 max-w-md text-[14px] leading-relaxed text-haze">{text}</p>
+      </div>
+    </div>
+  );
+};
 
-// ——— живые демо: каждое показывает умение в деле ———
-
-// Магазин: товар «летит» в корзину, счётчик растёт
+// 1. Магазин: товар «летит» в корзину, счётчик растёт
 const ShopDemo: React.FC = () => {
   const [count, setCount] = useState(2);
   const [flying, setFlying] = useState<number[]>([]);
@@ -17,18 +43,33 @@ const ShopDemo: React.FC = () => {
     setTimeout(() => {
       setFlying((f) => f.filter((x) => x !== id));
       setCount((c) => c + 1);
-    }, 650);
+    }, 700);
   };
   return (
-    <div className="relative flex w-full max-w-[440px] items-end gap-4 sm:gap-6">
-      <div className="relative w-[78%] bg-night p-3 sm:w-[62%]">
-        <img src={`${base}works/apple-favorite-mobile.webp`} alt="" className="aspect-[4/3] w-full object-cover object-top" draggable={false} />
-        <div className="mt-3 flex items-end justify-between gap-2">
+    <div className="relative flex w-full max-w-[460px] items-center gap-5">
+      <div className="relative w-[58%] rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-[linear-gradient(160deg,#1f1b33,#121019)]">
+          {/* макет смартфона: корпус, экран, вырез под камеру */}
+          <motion.div
+            className="absolute left-1/2 top-[14%] h-[96%] w-[38%] -translate-x-1/2 rounded-[22px] border-[3px] border-[#3a3748] bg-[#0b0a10] p-[5px] shadow-[0_20px_40px_rgba(0,0,0,.5)]"
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <div className="relative h-full w-full overflow-hidden rounded-[16px] bg-[linear-gradient(170deg,#8b6cff,#3ee6ff_70%,#c8ff4d)]">
+              <div className="absolute left-1/2 top-1.5 h-2 w-8 -translate-x-1/2 rounded-full bg-black" />
+              <div className="absolute inset-x-2 bottom-3 space-y-1">
+                <div className="h-1.5 w-2/3 rounded-full bg-white/80" />
+                <div className="h-1.5 w-1/2 rounded-full bg-white/50" />
+              </div>
+            </div>
+          </motion.div>
+        </div>
+        <div className="mt-3 flex items-end justify-between">
           <div>
-            <div className="text-[13px] text-haze">iPhone 17 Pro</div>
-            <div className="whitespace-nowrap text-[18px] font-semibold tabular-nums">129 990 ₽</div>
+            <div className="text-[13px] font-semibold">Смартфон Nova</div>
+            <div className="font-display text-lg font-semibold">89 990 ₽</div>
           </div>
-          <button onClick={add} className="whitespace-nowrap rounded-full bg-lime px-4 py-2 text-[13px] font-semibold text-void transition-transform active:scale-90">
+          <button onClick={add} className="rounded-full bg-lime px-4 py-2 text-[12px] font-bold text-void transition-transform active:scale-90">
             В корзину
           </button>
         </div>
@@ -36,34 +77,31 @@ const ShopDemo: React.FC = () => {
           {flying.map((id) => (
             <motion.span
               key={id}
-              className="absolute bottom-5 right-6 z-10 h-3.5 w-3.5 rounded-full bg-lime"
+              className="absolute bottom-6 right-8 z-10 h-4 w-4 rounded-full bg-lime shadow-[0_0_20px_#c8ff4d]"
               initial={{ x: 0, y: 0, scale: 1 }}
-              animate={{ x: [0, 70, 150], y: [0, -110, -10], scale: [1, 1.1, 0.5] }}
+              animate={{ x: [0, 60, 150], y: [0, -120, -40], scale: [1, 1.2, 0.4] }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.65, ease: 'easeInOut' }}
+              transition={{ duration: 0.7, ease: 'easeInOut' }}
             />
           ))}
         </AnimatePresence>
       </div>
-      <motion.div
-        key={count}
-        initial={{ scale: 1.25 }}
-        animate={{ scale: 1 }}
-        transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-        className="relative mb-2 grid h-16 w-16 place-items-center rounded-full bg-night"
-      >
-        <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
-          <path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8Z" />
-          <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
-        </svg>
-        <span className="absolute -right-1 -top-1 grid h-6 min-w-6 place-items-center rounded-full bg-lime px-1.5 text-[12px] font-bold text-void tabular-nums">{count}</span>
-      </motion.div>
+      <div className="flex flex-1 flex-col items-center gap-3">
+        <motion.div key={count} initial={{ scale: 1.35 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 15 }} className="relative grid h-20 w-20 place-items-center rounded-3xl border border-white/15 bg-white/[0.05]">
+          <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+            <path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8Z" />
+            <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
+          </svg>
+          <span className="absolute -right-2 -top-2 grid h-7 min-w-7 place-items-center rounded-full bg-rose px-1.5 text-[12px] font-bold text-white">{count}</span>
+        </motion.div>
+        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-haze">Нажмите «В корзину»</span>
+      </div>
     </div>
   );
 };
 
-// 3D: каркасный глобус крутится сам и тянется за курсором
-const GlobeDemo: React.FC = () => {
+// 2. Каркасный 3D-глобус: крутится сам и тянется за курсором
+const CubeDemo: React.FC = () => {
   const rx = useSpring(useMotionValue(-22), { stiffness: 80, damping: 14 });
   const ry = useSpring(useMotionValue(35), { stiffness: 80, damping: 14 });
   const box = useRef<HTMLDivElement>(null);
@@ -100,25 +138,27 @@ const GlobeDemo: React.FC = () => {
         rx.set(-22);
       }}
     >
-      <motion.div className="relative h-44 w-44" style={{ transformStyle: 'preserve-3d', rotateX: rx, rotateY: ry }}>
+      {/* каркасный глобус: меридианы и параллели из тонких колец */}
+      <motion.div className="relative h-32 w-32" style={{ transformStyle: 'preserve-3d', rotateX: rx, rotateY: ry }}>
         {Array.from({ length: 8 }, (_, i) => (
-          <div key={`m${i}`} className="absolute inset-0 rounded-full border border-mist/45" style={{ transform: `rotateY(${i * 22.5}deg)` }} />
+          <div key={`m${i}`} className="absolute inset-0 rounded-full border border-cyan/50" style={{ transform: `rotateY(${i * 22.5}deg)` }} />
         ))}
         {[-0.66, -0.33, 0, 0.33, 0.66].map((k) => (
           <div
             key={`p${k}`}
-            className={`absolute inset-0 rounded-full border ${k === 0 ? 'border-lime' : 'border-mist/30'}`}
-            style={{ transform: `rotateX(90deg) translateZ(${k * 88}px) scale(${Math.sqrt(1 - k * k)})` }}
+            className={`absolute inset-0 rounded-full border ${k === 0 ? 'border-lime/80' : 'border-violet/50'}`}
+            style={{ transform: `rotateX(90deg) translateZ(${k * 64}px) scale(${Math.sqrt(1 - k * k)})` }}
           />
         ))}
+        <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-lime shadow-[0_0_16px_#c8ff4d]" />
       </motion.div>
     </div>
   );
 };
 
-// Анимация: буквы разбегаются от курсора (считаем только когда мышь над демо)
+// 3. Буквы разбегаются от курсора (считаем только когда мышь двигается над плиткой)
 type Pointer = { x: number; y: number } | null;
-const Letter: React.FC<{ ch: string; subs: React.MutableRefObject<Set<(m: Pointer) => void>> }> = ({ ch, subs }) => {
+const Letter: React.FC<{ ch: string; subs: React.MutableRefObject<Set<(m: Pointer) => void>>; style?: React.CSSProperties }> = ({ ch, subs, style }) => {
   const ref = useRef<HTMLSpanElement>(null);
   const x = useSpring(0, { stiffness: 200, damping: 12 });
   const y = useSpring(0, { stiffness: 200, damping: 12 });
@@ -136,9 +176,9 @@ const Letter: React.FC<{ ch: string; subs: React.MutableRefObject<Set<(m: Pointe
       const dx = b.left + b.width / 2 - m.x;
       const dy = b.top + b.height / 2 - m.y;
       const d = Math.hypot(dx, dy);
-      const f = Math.max(0, 1 - d / 130);
-      x.set((dx / (d || 1)) * f * 42);
-      y.set((dy / (d || 1)) * f * 42);
+      const f = Math.max(0, 1 - d / 120);
+      x.set((dx / (d || 1)) * f * 38);
+      y.set((dy / (d || 1)) * f * 38);
       r.set(f * (dx > 0 ? 25 : -25));
     };
     const set = subs.current;
@@ -148,7 +188,7 @@ const Letter: React.FC<{ ch: string; subs: React.MutableRefObject<Set<(m: Pointe
     };
   }, [subs, x, y, r]);
   return (
-    <motion.span ref={ref} className="inline-block" style={{ x, y, rotate: r }}>
+    <motion.span ref={ref} className="inline-block" style={{ ...style, x, y, rotate: r }}>
       {ch}
     </motion.span>
   );
@@ -158,19 +198,17 @@ const MotionDemo: React.FC = () => {
   const send = (m: Pointer) => subs.current.forEach((fn) => fn(m));
   return (
     <div className="grid h-full w-full place-items-center" onPointerMove={(e) => send({ x: e.clientX, y: e.clientY })} onPointerLeave={() => send(null)}>
-      <div className="select-none text-center">
-        <div className="font-head text-[18vw] font-semibold leading-none tracking-[-0.05em] sm:text-[120px]">
-          {[...'живое'].map((c, i) => (
-            <Letter key={i} ch={c} subs={subs} />
-          ))}
-        </div>
-        <p className="mt-4 text-[14px] text-haze">Проведите курсором по слову</p>
+      <div className="select-none text-center font-display text-[13vw] font-semibold leading-none tracking-tight sm:text-6xl">
+        {[...'живое'].map((c, i) => (
+          <Letter key={i} ch={c} subs={subs} style={auroraLetter(i, 5)} />
+        ))}
+        <div className="mt-3 font-mono text-[10px] font-normal uppercase tracking-[0.25em] text-haze">проведите курсором</div>
       </div>
     </div>
   );
 };
 
-// Telegram: переписка с ботом магазина (настоящие цвета Telegram — это кусок продукта)
+// 4. Telegram: сообщения бота появляются по кругу
 const MESSAGES = [
   { me: false, t: 'Здравствуйте! Хочу iPhone 17 Pro' },
   { me: true, t: 'Отличный выбор! Цвет и память?' },
@@ -187,24 +225,24 @@ const TelegramDemo: React.FC = () => {
     return () => clearInterval(t);
   }, [inView]);
   return (
-    <div ref={ref} data-ui className="w-full max-w-[290px] rounded-[22px] bg-[#17212b] p-3.5">
-      <div className="mb-3 flex items-center gap-2.5 pb-2">
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-[#2b5278] text-[13px] font-bold">М</span>
+    <div ref={ref} className="w-full max-w-[250px] rounded-[30px] border border-white/10 bg-[#17212b] p-3 shadow-2xl">
+      <div className="mb-3 flex items-center gap-2 border-b border-white/10 pb-2.5">
+        <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-cyan to-violet text-[12px] font-bold">М</span>
         <div className="leading-tight">
-          <div className="text-[14px] font-semibold">Магазин</div>
-          <div className="text-[12px] text-[#6ab3f3]">бот</div>
+          <div className="text-[13px] font-semibold">Магазин · бот</div>
+          <div className="text-[10px] text-cyan">онлайн</div>
         </div>
       </div>
-      <div className="flex h-[170px] flex-col justify-end gap-1.5">
+      <div className="flex h-[150px] flex-col justify-end gap-1.5">
         <AnimatePresence initial={false}>
           {MESSAGES.slice(0, Math.min(n, MESSAGES.length)).map((m, i) => (
             <motion.div
               key={i}
               layout
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 12, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0 }}
-              className={`max-w-[85%] rounded-2xl px-3 py-1.5 text-[13px] ${m.me ? 'self-end rounded-br-md bg-[#2b5278]' : 'self-start rounded-bl-md bg-[#232e3c]'}`}
+              className={`max-w-[85%] rounded-2xl px-3 py-1.5 text-[12px] ${m.me ? 'self-end rounded-br-md bg-[#2b5278]' : 'self-start rounded-bl-md bg-[#232e3c]'}`}
             >
               {m.t}
             </motion.div>
@@ -215,7 +253,7 @@ const TelegramDemo: React.FC = () => {
   );
 };
 
-// Админка: столбики растут, число считается
+// 5. Админка: столбики растут, число считается
 const AdminDemo: React.FC = () => {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: '-20% 0px' });
@@ -227,118 +265,109 @@ const AdminDemo: React.FC = () => {
     return () => c.stop();
   }, [inView]);
   return (
-    <div ref={ref} data-ui className="w-full max-w-[340px] bg-night p-5">
-      <div className="flex items-baseline justify-between text-[13px] text-haze">
-        <span>Заказы за месяц</span>
-        <span className="text-lime">+24%</span>
+    <div ref={ref} className="w-full max-w-[320px] rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="flex items-baseline justify-between">
+        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-haze">Заказы за месяц</span>
+        <span className="font-mono text-[10px] text-lime">+24%</span>
       </div>
-      <div className="mt-1 text-[34px] font-semibold tabular-nums tracking-[-0.02em]">{total.toLocaleString('ru-RU')}</div>
-      <div className="mt-4 flex h-28 items-end gap-1.5">
+      <div className="mt-1 font-display text-3xl font-semibold">{total.toLocaleString('ru-RU')}</div>
+      <div className="mt-4 flex h-24 items-end gap-1.5">
         {bars.map((b, i) => (
           <motion.div
             key={i}
-            className={`flex-1 ${i === bars.length - 1 ? 'bg-lime' : 'bg-mist/25'}`}
+            className="group relative flex-1 rounded-t-md bg-gradient-to-t from-violet/70 to-cyan"
             initial={{ height: 0 }}
             animate={inView ? { height: `${b}%` } : {}}
             transition={{ delay: 0.1 + i * 0.07, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          />
+          >
+            <span className="absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-white px-1.5 py-0.5 font-mono text-[9px] font-bold text-void opacity-0 transition-opacity group-hover:opacity-100">{b * 13}</span>
+          </motion.div>
         ))}
       </div>
     </div>
   );
 };
 
-// Адаптив: одна и та же страница перестраивается под компьютер, планшет и телефон
-const WIDTHS = [320, 220, 120];
+// 6. Адаптив: одна и та же страница перестраивается под компьютер, планшет и телефон
+const WIDTHS = [300, 200, 112];
 const ResponsiveDemo: React.FC = () => {
   const [k, setK] = useState(0);
   const box = useRef<HTMLDivElement>(null);
   const inView = useInView(box);
   useEffect(() => {
-    if (!inView) return;
+    if (!inView) return; // за экраном не перестраиваемся (каждая смена — пересчёт раскладки)
     const t = setInterval(() => setK((v) => (v + 1) % WIDTHS.length), 1800);
     return () => clearInterval(t);
   }, [inView]);
+  const narrow = k === 2;
   return (
-    <div className="flex flex-col items-center gap-4">
-      <motion.div ref={box} className="bg-night p-2.5" animate={{ width: WIDTHS[k] }} transition={{ type: 'spring', stiffness: 120, damping: 18 }}>
-        <div className="mb-2 h-2.5 w-1/3 bg-mist/35" />
-        <motion.div layout className="mb-2 h-14 bg-lime/80" />
-        <motion.div layout className={`grid gap-1.5 ${k === 2 ? 'grid-cols-1' : k === 1 ? 'grid-cols-2' : 'grid-cols-3'}`}>
-          {[0, 1, 2].map((i) => (
-            <motion.div layout key={i} className="h-9 bg-mist/15" />
-          ))}
-        </motion.div>
+    <motion.div
+      ref={box}
+      className="rounded-2xl border-2 border-white/20 bg-white/[0.03] p-2.5"
+      animate={{ width: WIDTHS[k] }}
+      transition={{ type: 'spring', stiffness: 120, damping: 18 }}
+    >
+      <div className="mb-2 h-2.5 w-1/3 rounded-full bg-white/30" />
+      <motion.div layout className="mb-2 h-14 rounded-lg bg-gradient-to-r from-violet to-cyan" />
+      <motion.div layout className={`grid gap-1.5 ${narrow ? 'grid-cols-1' : k === 1 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+        {[0, 1, 2].map((i) => (
+          <motion.div layout key={i} className="h-9 rounded-md bg-white/15" />
+        ))}
       </motion.div>
-      <p className="text-[14px] text-haze">{['Компьютер', 'Планшет', 'Телефон'][k]}</p>
-    </div>
+    </motion.div>
   );
 };
 
-const ITEMS = [
-  { title: 'Интернет-магазины', text: 'Каталог, корзина, заказы прямо в Telegram и админка, где цены и товары меняются без программиста.', demo: <ShopDemo /> },
-  { title: '3D в браузере', text: 'Модели, планеты и товары, которые можно покрутить. Без плагинов и установки.', demo: <GlobeDemo /> },
-  { title: 'Анимации', text: 'Интерфейс отвечает на каждое движение — на таком сайте хочется задержаться.', demo: <MotionDemo /> },
-  { title: 'Telegram', text: 'Магазин внутри Telegram и заявки, которые сразу приходят менеджеру в чат.', demo: <TelegramDemo /> },
-  { title: 'Админ-панели', text: 'Заказы, остатки, статистика посещений и импорт прайсов — в одном месте.', demo: <AdminDemo /> },
-  { title: 'Любой экран', text: 'Компьютер, телефон и встроенный браузер Telegram — вёрстка подстраивается под каждый.', demo: <ResponsiveDemo /> },
-];
-
-// «Что мы делаем»: слева список, справа — живое демо выбранного пункта (на телефоне демо раскрывается под пунктом)
-const Skills: React.FC = () => {
-  const [cur, setCur] = useState(0);
-  return (
-    <section id="skills" className="relative mx-auto max-w-[1500px] px-5 py-32 sm:px-10 sm:py-48">
-      <div className="grid gap-x-10 lg:grid-cols-12">
-        <div className="lg:col-span-6">
-          <h2 className="font-head text-[11vw] font-semibold leading-[0.95] tracking-[-0.045em] sm:text-[7vw] lg:text-[4.6vw]">
-            <Rise text="Не только красиво —" />
-            <br />
-            <Rise text="ещё и работает" delay={0.12} />
-          </h2>
-          <ul className="mt-14">
-            {ITEMS.map((it, i) => {
-              const on = cur === i;
-              return (
-                <Up as="li" key={it.title} delay={i * 0.05}>
-                  <button
-                    onClick={() => setCur(i)}
-                    onPointerEnter={() => finePointer() && setCur(i)}
-                    aria-expanded={on}
-                    className="group block w-full py-4 text-left"
-                  >
-                    <span className={`block font-head text-[8vw] font-semibold leading-[1.05] tracking-[-0.035em] transition-colors duration-300 sm:text-[44px] ${on ? 'text-mist' : 'text-mist/30 group-hover:text-mist/60'}`}>
-                      {it.title}
-                    </span>
-                    <span className={`mt-2 block max-w-md text-[16px] leading-[1.55] text-haze transition-opacity duration-300 ${on ? 'opacity-100' : 'opacity-0 max-lg:hidden'}`}>{it.text}</span>
-                  </button>
-                  {/* телефон: демо прямо под пунктом */}
-                  {on && <div className="grid min-h-[300px] place-items-center bg-night/60 p-5 lg:hidden">{it.demo}</div>}
-                </Up>
-              );
-            })}
-          </ul>
-        </div>
-        {/* компьютер: одно большое демо, прилипает при прокрутке */}
-        <div className="hidden lg:col-span-6 lg:block">
-          <div className="sticky top-28 mt-[9.5vw] grid h-[560px] place-items-center bg-night/60 p-10">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={cur}
-                className="grid h-full w-full place-items-center"
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              >
-                {ITEMS[cur].demo}
-              </motion.div>
-            </AnimatePresence>
+const Skills: React.FC = () => (
+  <section id="skills" className="relative mx-auto max-w-[1500px] px-5 py-28 sm:px-10 sm:py-40">
+    <Eyebrow n="02">Возможности</Eyebrow>
+    <h2 className="mt-8 max-w-5xl font-display text-[12vw] font-semibold leading-[0.9] tracking-[-0.04em] sm:text-[8vw] lg:text-[5.6vw]">
+      <SplitReveal text="Не просто красиво —" /> <span className="text-outline">
+        <SplitReveal text="работает" delay={0.3} />
+      </span>
+    </h2>
+    <div className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <Reveal className="md:col-span-2">
+        <Tile tag="Продажи" title="Интернет-магазины" text="Каталог, корзина, заказы прямо в Telegram и админка, где цены и товары меняются без программиста." className="h-full">
+          <ShopDemo />
+        </Tile>
+      </Reveal>
+      <Reveal delay={0.08}>
+        <Tile tag="WebGL" title="3D прямо в браузере" text="Модели, планеты, товары, которые можно покрутить. Без плагинов и установки." className="h-full">
+          <CubeDemo />
+        </Tile>
+      </Reveal>
+      <Reveal>
+        <Tile tag="Motion" title="Анимации с характером" text="Интерфейс отвечает на каждое движение — поэтому на сайте хочется задержаться." className="h-full">
+          <MotionDemo />
+        </Tile>
+      </Reveal>
+      <Reveal delay={0.08}>
+        <Tile tag="Telegram" title="Мини-приложения и боты" text="Магазин внутри Telegram и заявки, которые сразу падают менеджеру в чат." className="h-full">
+          <TelegramDemo />
+        </Tile>
+      </Reveal>
+      <Reveal delay={0.16}>
+        <Tile tag="Данные" title="Админ-панели" text="Заказы, остатки, статистика посещений и импорт прайсов — всё в одном месте." className="h-full">
+          <AdminDemo />
+        </Tile>
+      </Reveal>
+      <Reveal className="md:col-span-2 lg:col-span-3">
+        <Tile tag="Адаптив" title="Идеально на любом экране" text="Компьютер, планшет, телефон, MacBook и встроенный браузер Telegram — вёрстка подстраивается под каждый." className="h-full">
+          <div className="flex w-full flex-wrap items-center justify-center gap-10">
+            <ResponsiveDemo />
+            <div className="flex gap-3 font-mono text-[10px] uppercase tracking-[0.2em] text-haze">
+              <span>Компьютер</span>
+              <span className="text-white/20">→</span>
+              <span>Планшет</span>
+              <span className="text-white/20">→</span>
+              <span>Телефон</span>
+            </div>
           </div>
-        </div>
-      </div>
-    </section>
-  );
-};
+        </Tile>
+      </Reveal>
+    </div>
+  </section>
+);
 
 export default Skills;

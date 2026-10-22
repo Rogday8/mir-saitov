@@ -1,18 +1,14 @@
 @import 'tailwindcss';
 
 @theme {
-  /* Unbounded — только знак «Мир сайтов» (первый экран, логотип); всё остальное — один гротеск Onest */
   --font-display: 'Unbounded', system-ui, sans-serif;
-  --font-head: 'Onest', system-ui, sans-serif;
-  --font-sans: 'Onest', system-ui, sans-serif;
-  /* моноширинный — только для настоящего кода (пульт сайта) */
+  --font-sans: 'Manrope', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-  /* одна земля, одни чернила, один акцент (lime) — без фиолетово-голубых градиентов */
-  --color-void: #0b0b0c;
-  --color-night: #151517;
-  --color-haze: #9a968f;
-  --color-mist: #eeebe5;
+  --color-void: #07060c;
+  --color-night: #0e0c17;
+  --color-haze: #a7a3bf;
+  --color-mist: #ece9ff;
   --color-violet: #8b6cff;
   --color-cyan: #3ee6ff;
   --color-lime: #c8ff4d;
@@ -42,7 +38,7 @@
     color: var(--color-void);
   }
   :focus-visible {
-    outline: 2px solid var(--color-lime);
+    outline: 2px solid var(--color-cyan);
     outline-offset: 3px;
     border-radius: 6px;
   }
@@ -83,7 +79,7 @@ html.lenis body {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background-color: #0b0b0c;
+  background-color: #07060c;
   transition: background-color 1s ease;
 }
 /* свечение — отдельным слоем; цвет ставит Works.tsx прямо в style (не через переменную на :root —

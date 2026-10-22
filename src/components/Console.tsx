@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import confetti from 'canvas-confetti';
-import { Rise, Up } from './ui';
+import { Eyebrow, SplitReveal } from './ui';
 
 // «Пульт сайта»: пишете задачу словами — «код» печатается в терминале, и мини-сайт справа сразу меняется.
 type Cmd = 'gravity' | 'recolor' | 'confetti' | 'matrix' | 'runaway' | 'tilt' | 'night' | 'reset';
@@ -35,7 +35,7 @@ const PALETTES = [
   { bg: '#fff0f6', ink: '#3a0b22', accent: '#e8338a', card: '#ffd6ea' },
   { bg: '#f6f1ff', ink: '#1e0f3d', accent: '#7a4dff', card: '#e6dcff' },
 ];
-const DEFAULT = { bg: '#f4f1ea', ink: '#17150f', accent: '#ff5a1f', card: '#e8e2d6' };
+const DEFAULT = { bg: '#f7f5ff', ink: '#14121f', accent: '#7c5cff', card: '#ebe6ff' };
 
 interface Line {
   id: number;
@@ -163,24 +163,19 @@ const Console: React.FC = () => {
     }
   };
 
-  const ink = night ? '#eeebe5' : theme.ink;
-  const bg = night ? '#121214' : theme.bg;
-  const card = night ? '#1d1d20' : theme.card;
+  const ink = night ? '#f2f0ff' : theme.ink;
+  const bg = night ? '#0f0e17' : theme.bg;
+  const card = night ? '#1c1a2b' : theme.card;
 
   return (
-    <section id="console" className="relative mx-auto max-w-[1500px] px-5 py-32 sm:px-10 sm:py-48">
-      <div className="mx-auto max-w-3xl text-center">
-        <h2 className="font-head text-[11vw] font-semibold leading-[0.95] tracking-[-0.045em] sm:text-[7vw] lg:text-[4.6vw]">
-          <Rise text="Скажите словами —" />
-          <br />
-          <Rise text="сайт поменяется" delay={0.12} />
-        </h2>
-        <Up as="p" delay={0.2} className="mx-auto mt-6 max-w-xl text-[17px] leading-[1.55] text-haze">
-          Так мы и работаем: задачу ставите обычными словами, а сайт меняется на глазах. Попробуйте — нажмите любую команду.
-        </Up>
-      </div>
+    <section id="console" className="relative mx-auto max-w-[1500px] px-5 py-28 sm:px-10 sm:py-36">
+      <Eyebrow n="03">Пульт сайта</Eyebrow>
+      <h2 className="mt-8 font-display text-[12vw] font-semibold leading-[0.9] tracking-[-0.04em] sm:text-[8vw] lg:text-[5.6vw]">
+        <SplitReveal text="Скажите —" /> <SplitReveal text="сайт сделает" delay={0.2} aurora />
+      </h2>
+      <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-haze">Так мы и работаем: задачу ставите словами, а сайт меняется на глазах. Попробуйте сами — нажмите любую команду.</p>
 
-      <div className="mt-16 grid gap-6 lg:grid-cols-[1fr_1.25fr]">
+      <div className="mt-12 grid gap-6 lg:grid-cols-[1fr_1.25fr]">
         {/* команды и терминал */}
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap gap-2">
@@ -189,22 +184,25 @@ const Console: React.FC = () => {
                 key={c.id}
                 onClick={() => run(c.id, c.label)}
                 disabled={typing}
-                className={`rounded-full px-4 py-2.5 text-[14px] font-medium transition-colors disabled:opacity-50 ${c.id === 'reset' ? 'text-haze hover:text-mist' : 'bg-night hover:bg-lime hover:text-void'}`}
+                className={`rounded-full border px-4 py-2.5 font-mono text-[13px] transition-all disabled:opacity-50 ${c.id === 'reset' ? 'border-white/15 text-haze hover:text-mist' : 'border-white/15 hover:border-lime hover:bg-lime hover:text-void'}`}
               >
                 {c.label}
               </button>
             ))}
           </div>
-          <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden bg-night">
+          <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-[24px] border border-white/10 bg-[#0b0a12]">
+            <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5 font-mono text-[11px] text-haze">
+              <span className="h-2 w-2 rounded-full bg-lime" /> mir-console
+            </div>
             <div ref={term} className="no-scrollbar flex-1 space-y-1.5 overflow-y-auto p-4 font-mono text-[13px] leading-relaxed">
               {lines.map((l) => (
-                <div key={l.id} className={l.kind === 'ask' ? 'text-mist' : l.kind === 'ok' ? 'text-lime' : l.kind === 'code' ? 'text-mist/70' : 'text-haze'}>
+                <div key={l.id} className={l.kind === 'ask' ? 'text-mist' : l.kind === 'ok' ? 'text-lime' : l.kind === 'code' ? 'text-cyan' : 'text-haze'}>
                   {l.text}
                   {typing && l.id === nextId.current - 1 && <span className="ml-0.5 inline-block h-4 w-2 translate-y-0.5 animate-pulse bg-lime" />}
                 </div>
               ))}
             </div>
-            <form onSubmit={submit} className="flex items-center gap-2 bg-black/30 p-3">
+            <form onSubmit={submit} className="flex items-center gap-2 border-t border-white/10 p-3">
               <span className="font-mono text-lime">›</span>
               <input
                 value={input}
@@ -220,15 +218,20 @@ const Console: React.FC = () => {
         </div>
 
         {/* мини-сайт */}
-        {/* наклон в 3D включается командой «сделай 3D» */}
         <div onPointerMove={onMove} onPointerLeave={() => setRot({ x: 0, y: 0 })} style={{ perspective: 900 }}>
           <motion.div
             ref={site}
             animate={{ rotateX: rot.x, rotateY: rot.y }}
             transition={{ type: 'spring', stiffness: 120, damping: 16 }}
-            className="relative overflow-hidden rounded-[6px]"
+            className="relative overflow-hidden rounded-[24px] border border-white/15 shadow-[0_40px_120px_-30px_rgba(0,0,0,.8)]"
             style={{ transformStyle: 'preserve-3d', background: bg, color: ink, transition: 'background .6s, color .6s' }}
           >
+            <div className="flex items-center gap-2 border-b border-black/10 bg-black/5 px-4 py-2.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+              <span className="mx-auto rounded-full bg-black/5 px-3 py-0.5 font-mono text-[10px] opacity-60">vash-sait.ru</span>
+            </div>
             <MiniSite gravity={gravity} accent={theme.accent} card={card} ink={ink} btnRef={btn} btnPos={btnPos} />
             <AnimatePresence>{matrix && <MatrixRain key="m" />}</AnimatePresence>
           </motion.div>
@@ -330,7 +333,7 @@ const MiniSite: React.FC<{ gravity: boolean; accent: string; card: string; ink: 
   return (
     <div ref={box} className={`relative h-[440px] select-none p-6 sm:h-[480px] sm:p-8 ${gravity ? 'touch-none' : ''}`} data-cursor={gravity ? 'Хватай' : undefined}>
       <div className="flex items-center justify-between">
-        <div data-phys className="rounded-lg px-1 font-head text-lg font-bold" style={{ color: accent }}>
+        <div data-phys className="rounded-lg px-1 font-display text-lg font-bold" style={{ color: accent }}>
           ●&nbsp;Бренд
         </div>
         <div className="flex gap-4 text-[13px] font-semibold opacity-70">
@@ -339,11 +342,11 @@ const MiniSite: React.FC<{ gravity: boolean; accent: string; card: string; ink: 
           <span data-phys>Контакты</span>
         </div>
       </div>
-      <div data-phys className="mt-10 inline-block font-head text-[34px] font-bold leading-[1.05] sm:text-[44px]">
+      <div data-phys className="mt-10 inline-block font-display text-[34px] font-bold leading-[1.05] sm:text-[44px]">
         Ваш сайт
       </div>
       <br />
-      <div data-phys className="inline-block font-head text-[34px] font-bold leading-[1.05] sm:text-[44px]" style={{ color: accent }}>
+      <div data-phys className="inline-block font-display text-[34px] font-bold leading-[1.05] sm:text-[44px]" style={{ color: accent }}>
         оживает
       </div>
       <p data-phys className="mt-3 max-w-xs text-[14px] opacity-70">

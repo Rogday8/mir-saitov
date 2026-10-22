@@ -122,38 +122,14 @@ export const Reveal: React.FC<{ children: React.ReactNode; delay?: number; y?: n
   </motion.div>
 );
 
-// Заголовок раздела: слова поднимаются из-под маски по очереди (60 мс между словами), один раз
-export const Rise: React.FC<{ text: string; className?: string; delay?: number }> = ({ text, className = '', delay = 0 }) => (
-  <motion.span className={`inline ${className}`} initial="hide" whileInView="show" viewport={{ once: true, margin: '-10% 0px' }} aria-label={text}>
-    {text.split(' ').map((w, i, all) => (
-      <span key={i} className="inline-block overflow-hidden align-bottom pb-[0.1em] -mb-[0.1em]" aria-hidden>
-        <motion.span
-          className="inline-block"
-          variants={{ hide: { y: '105%' }, show: { y: '0%', transition: { duration: 0.85, delay: delay + i * 0.06, ease: [0.16, 1, 0.3, 1] } } }}
-        >
-          {w}
-          {i < all.length - 1 ? ' ' : ''}
-        </motion.span>
-      </span>
-    ))}
-  </motion.span>
+// Подпись раздела: номер + название моноширинным
+export const Eyebrow: React.FC<{ n: string; children: React.ReactNode; className?: string }> = ({ n, children, className = '' }) => (
+  <div className={`flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.28em] text-haze ${className}`}>
+    <span className="text-lime">{n}</span>
+    <span className="h-px w-10 bg-white/20" />
+    <span>{children}</span>
+  </div>
 );
-
-// Блок текста: поднимается на 24px и проявляется, когда доходит до экрана
-export const Up: React.FC<{ children: React.ReactNode; delay?: number; className?: string; as?: 'div' | 'p' | 'li' }> = ({ children, delay = 0, className = '', as = 'div' }) => {
-  const C = motion[as];
-  return (
-    <C
-      className={className}
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-8% 0px' }}
-      transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
-    >
-      {children}
-    </C>
-  );
-};
 
 // Стрелка ↗
 export const Arrow: React.FC<{ className?: string }> = ({ className = '' }) => (

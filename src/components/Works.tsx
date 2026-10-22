@@ -5,7 +5,7 @@ import { useSectionProgress } from '../lib/progress';
 import { scrollToId } from '../lib/smooth';
 import { BrowserFrame, PhoneFrame } from './Devices';
 import LiveModal from './LiveModal';
-import { Arrow, Rise, Up } from './ui';
+import { Arrow, Eyebrow, Magnetic, SplitReveal } from './ui';
 
 const base = import.meta.env.BASE_URL;
 
@@ -28,54 +28,101 @@ const Scene = React.memo(function Scene({ w, i, onLive, desktop }: { w: Work; i:
   const p = useSectionProgress(ref);
   const phoneY = useTransform(p, [0, 1], [140, -140]);
   const extraY = useTransform(p, [0, 1], [220, -200]);
+  const numY = useTransform(p, [0, 1], [-80, 80]);
   const flip = i % 2 === 1;
+  const n = String(i + 1).padStart(2, '0');
 
   return (
     <article ref={ref} id={`work-${w.slug}`} data-work={i} className="relative flex items-center py-24 sm:py-32 lg:min-h-screen lg:py-24" style={{ color: w.ink }}>
+      {/* огромный номер на фоне */}
+      <motion.div
+        aria-hidden
+        style={{ y: numY, WebkitTextStroke: `1px ${w.ink}22` }}
+        className={`pointer-events-none absolute top-10 select-none font-display text-[38vw] font-bold leading-none text-transparent lg:text-[26vw] ${flip ? 'left-[-2vw]' : 'right-[-2vw]'}`}
+      >
+        {n}
+      </motion.div>
+
       <div className="relative mx-auto grid w-full max-w-[1500px] items-center gap-12 px-5 sm:px-10 lg:grid-cols-12 lg:gap-10">
         {/* текст */}
         <div className={`order-2 lg:col-span-5 ${flip ? 'lg:order-2 lg:col-start-8' : 'lg:order-1'}`}>
-          <p className="mb-5 text-[15px] opacity-70">
-            {w.kind}, {w.year}
-            {w.status === 'Работает' ? ' — работает' : ` — ${w.status.toLowerCase()}`}
-          </p>
-          <h3 className="font-head text-[14vw] font-semibold leading-[0.95] tracking-[-0.045em] sm:text-[9vw] lg:text-[5.6vw]">
-            <Rise text={w.name} />
+          <div className="mb-6 flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-[0.22em]">
+            <span style={{ color: w.accent }}>{n}</span>
+            <span className="opacity-40">/</span>
+            <span className="opacity-70">{w.kind}</span>
+            <span className="ml-1 rounded-full border px-2.5 py-1 text-[10px]" style={{ borderColor: `${w.ink}33` }}>
+              {w.status === 'Работает' && <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full align-middle" style={{ background: '#3ddc84' }} />}
+              {w.status} · {w.year}
+            </span>
+          </div>
+          <h3 className="font-display text-[13vw] font-semibold leading-[0.9] tracking-[-0.035em] sm:text-[8vw] lg:text-[5.4vw]">
+            <SplitReveal text={w.name} />
           </h3>
-          <Up as="p" delay={0.15} className="mt-6 max-w-xl text-[17px] leading-[1.55] sm:text-[19px]">
+          <motion.p
+            className="mt-6 max-w-xl text-[16px] leading-relaxed opacity-80 sm:text-[18px]"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 0.8, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          >
             {w.lead}
-          </Up>
-          <Up delay={0.25} className="mt-7 max-w-xl">
-            <p className="text-[15px] leading-[1.6] opacity-70">{w.features.join(' · ')}</p>
-          </Up>
+          </motion.p>
+          <motion.ul
+            className="mt-7 flex flex-wrap gap-2"
+            initial="hide"
+            whileInView="show"
+            viewport={{ once: true }}
+            variants={{ show: { transition: { staggerChildren: 0.06, delayChildren: 0.35 } } }}
+          >
+            {w.features.map((f) => (
+              <motion.li
+                key={f}
+                variants={{ hide: { opacity: 0, y: 14, scale: 0.9 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 22 } } }}
+                className="rounded-full border px-3.5 py-1.5 text-[13px] font-semibold"
+                style={{ borderColor: `${w.ink}26`, background: `${w.ink}0a` }}
+              >
+                {f}
+              </motion.li>
+            ))}
+          </motion.ul>
+          <div className="mt-6 font-mono text-[11px] uppercase tracking-[0.2em] opacity-55">{w.stack.join(' · ')}</div>
           <div className="mt-9 flex flex-wrap items-center gap-3">
             {w.embed && (
-              <button
-                onClick={() => onLive(w)}
-                className="rounded-full px-6 py-3.5 text-[15px] font-semibold transition-opacity hover:opacity-85"
-                style={{ background: w.accent, color: w.bg }}
-              >
-                Посмотреть здесь
-              </button>
+              <Magnetic>
+                <button
+                  onClick={() => onLive(w)}
+                  className="group relative flex items-center gap-3 overflow-hidden rounded-full py-3.5 pl-6 pr-4 font-bold"
+                  style={{ background: w.accent, color: w.bg }}
+                >
+                  <span className="relative z-10">Посмотреть вживую</span>
+                  <span className="relative z-10 grid h-7 w-7 place-items-center rounded-full transition-transform duration-500 group-hover:scale-110" style={{ background: w.bg, color: w.accent }}>
+                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </span>
+                </button>
+              </Magnetic>
             )}
-            <a
-              href={w.url}
-              target="_blank"
-              rel="noreferrer"
-              className="group flex items-center gap-2 rounded-full px-6 py-3.5 text-[15px] font-semibold transition-opacity hover:opacity-85"
-              style={w.embed ? { boxShadow: `inset 0 0 0 1.5px ${w.ink}55` } : { background: w.accent, color: '#fff' }}
-            >
-              Открыть сайт
-              <Arrow className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-            </a>
+            <Magnetic>
+              <a
+                href={w.url}
+                target="_blank"
+                rel="noreferrer"
+                className="group flex items-center gap-2 rounded-full border px-6 py-3.5 font-bold transition-colors"
+                style={w.embed ? { borderColor: `${w.ink}40` } : { background: w.accent, color: '#fff', borderColor: w.accent }}
+              >
+                Открыть сайт
+                <Arrow className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+              </a>
+            </Magnetic>
           </div>
         </div>
 
         {/* устройства */}
         <div className={`relative order-1 mt-6 lg:col-span-7 lg:my-0 ${flip ? 'lg:order-1' : 'lg:order-2'}`}>
           <motion.div
-            initial={{ opacity: 0, y: 60 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 80, rotate: flip ? -2 : 2 }}
+            whileInView={{ opacity: 1, y: 0, rotate: 0 }}
             viewport={{ once: true, margin: '-10% 0px' }}
             transition={{ duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
           >
@@ -99,7 +146,7 @@ const Scene = React.memo(function Scene({ w, i, onLive, desktop }: { w: Work; i:
             </motion.div>
           )}
           {/* телефон: макеты рядом под окном, крупно, с видео */}
-          <div className="mt-8 flex items-start justify-center gap-4 px-2 lg:hidden">
+          <div className="-mt-10 flex items-start justify-center gap-4 px-2 lg:hidden">
             <PhoneFrame
               className="w-[44%] max-w-[200px]"
               src={media(w.slug, '-mobile.webp')}
@@ -124,16 +171,19 @@ const Scene = React.memo(function Scene({ w, i, onLive, desktop }: { w: Work; i:
 
 const WorksHead = React.memo(function WorksHead() {
   return (
-    <div className="relative mx-auto grid max-w-[1500px] gap-8 px-5 pb-8 pt-32 sm:px-10 sm:pt-44 lg:grid-cols-12">
-      <h2 className="font-head text-[12vw] font-semibold leading-[0.95] tracking-[-0.045em] sm:text-[8vw] lg:col-span-8 lg:text-[6.2vw]">
-        <Rise text="Шесть сайтов," />
-        <br />
-        <Rise text="шесть характеров" delay={0.12} />
-      </h2>
-      <Up as="p" delay={0.2} className="max-w-md self-end text-[17px] leading-[1.55] text-haze lg:col-span-4">
-        Магазин с админкой и пять промо-сайтов. Листайте — страница перекрашивается в цвета каждого, а промо-сайты открываются прямо здесь.
-      </Up>
-    </div>
+      <div className="relative mx-auto max-w-[1500px] px-5 pb-10 pt-28 sm:px-10 sm:pt-40">
+        <Eyebrow n="01">Работы</Eyebrow>
+        <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <h2 className="font-display text-[14vw] font-semibold leading-[0.88] tracking-[-0.04em] sm:text-[10vw] lg:text-[7.5vw]">
+            <SplitReveal text="Галактика" />
+            <br />
+            <SplitReveal text="проектов" delay={0.2} aurora />
+          </h2>
+          <p className="max-w-sm text-[15px] leading-relaxed text-haze sm:text-[17px]">
+            Каждый сайт — свой мир со своим характером. Листайте: страница перекрасится под каждый из них, а промо-сайты можно открыть вживую прямо здесь.
+          </p>
+        </div>
+      </div>
   );
 });
 
@@ -184,12 +234,11 @@ const Works: React.FC = () => {
   useEffect(() => {
     const bg = document.getElementById('page-bg');
     if (!bg) return;
-    bg.style.backgroundColor = cur ? cur.bg : '#0b0b0c';
+    bg.style.backgroundColor = cur ? cur.bg : '#07060c';
     const glow = bg.firstElementChild as HTMLElement | null;
     if (glow) {
       glow.style.opacity = cur ? '1' : '0';
-      // без цветного свечения: фон работы — один ровный цвет
-      glow.style.background = 'none';
+      if (cur) glow.style.background = `radial-gradient(50% 45% at 70% 40%, ${cur.accent}2e, transparent 70%)`;
     }
   }, [cur]);
   const isDesktop = useIsDesktop();
@@ -210,7 +259,7 @@ const Works: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 30 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1 rounded-full bg-void p-1.5 text-mist shadow-[0_12px_40px_-12px_rgba(0,0,0,.6)]"
+            className="fixed bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1 rounded-full border border-white/15 bg-void/90 p-1.5 text-mist shadow-2xl lg:bg-void/70 lg:backdrop-blur-xl"
             aria-label="Работы"
           >
             <button
@@ -222,8 +271,8 @@ const Works: React.FC = () => {
               ←
             </button>
             <div className="flex min-w-[170px] max-w-[60vw] items-center gap-3 px-2">
-              <span className="text-[13px] tabular-nums text-haze">
-                <span className="text-mist">{active + 1}</span> из {WORKS.length}
+              <span className="font-mono text-[11px] text-haze">
+                <span className="text-mist">{String(active + 1).padStart(2, '0')}</span> / {String(WORKS.length).padStart(2, '0')}
               </span>
               <AnimatePresence mode="wait">
                 <motion.span
@@ -232,7 +281,7 @@ const Works: React.FC = () => {
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: -12, opacity: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="truncate whitespace-nowrap text-[14px] font-semibold"
+                  className="truncate whitespace-nowrap font-display text-[13px] font-semibold"
                 >
                   {cur.name}
                 </motion.span>
