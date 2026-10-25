@@ -33,7 +33,16 @@ const Footer: React.FC = () => (
       )}
     </div>
     <div className="mx-auto mt-6 flex max-w-[1500px] items-center justify-between px-5 pb-6 font-mono text-[11px] uppercase tracking-[0.2em] text-haze sm:px-10">
-      <span>© {new Date().getFullYear()} Мир сайтов · Все права защищены</span>
+      <span>
+        © {new Date().getFullYear()} Мир сайтов · Все права защищены
+        <span className="mt-1 block normal-case tracking-normal text-haze/60">
+          Фото башни и этажей —{' '}
+          <a href="https://unsplash.com" target="_blank" rel="noreferrer" className="hover:text-lime">
+            Unsplash
+          </a>
+          : Evg Klimov, Adrien Olichon, Brian J. Tromp, Sandra Williams, Med Badr Chemmaoui, Platon Matakaev
+        </span>
+      </span>
       <button onClick={scrollToTop} className="hover:text-lime">
         Наверх ↑
       </button>
