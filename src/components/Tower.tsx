@@ -5,11 +5,14 @@ import { finePointer, scrollToId } from '../lib/smooth';
 
 // «Башня»: подъём на лифте по зданию у Москва-Сити. Всё в 2D (фото и слои),
 // объём — за счёт перспективы, наклона этажей и параллакса. Прокрутка вниз = лифт едет вверх:
-// лобби → три этажа команды → крыша. На текущем этаже поворачиваются пластины жалюзи,
-// на фото — точки: наведите (или нажмите на телефоне), чтобы прочитать подсказку.
+// лобби → три этажа команды → крыша. Этажи за тёмным тонированным стеклом; у текущего
+// стекло светлеет, по бокам выплывают плашки с тем, чем занимаются на этаже.
+// На фото — точки: наведите (или нажмите на телефоне), чтобы прочитать подсказку.
 
 const base = import.meta.env.BASE_URL;
 const img = (n: string) => `${base}floors/${n}.webp`;
+// крошечная (40px) размытая копия фото — растянутая, она и есть «матовое стекло», без CSS-фильтров
+const blurImg = (n: string) => `${base}floors/blur/${n}.webp`;
 
 /** Точка на фото: координаты в процентах кадра, заголовок и пара строк */
 interface Spot {
@@ -17,6 +20,11 @@ interface Spot {
   y: number;
   t: string;
   d: string;
+}
+/** Плашка сбоку этажа: крупно и подпись */
+interface Chip {
+  t: string;
+  s: string;
 }
 interface Floor {
   key: string;
@@ -27,6 +35,7 @@ interface Floor {
   text?: string;
   cta?: boolean;
   spots: Spot[];
+  chips: Chip[];
 }
 
 const FLOORS: Floor[] = [
@@ -41,6 +50,12 @@ const FLOORS: Floor[] = [
       { x: 72, y: 55, t: 'Работаем удалённо', d: 'Созвоны, демо и правки онлайн — из любого города.' },
       { x: 30, y: 72, t: 'Без лишних посредников', d: 'Вы общаетесь напрямую с теми, кто делает сайт.' },
     ],
+    chips: [
+      { t: '3 человека', s: 'вся студия' },
+      { t: 'Онлайн', s: 'созвоны и демо' },
+      { t: 'Напрямую', s: 'без посредников' },
+      { t: 'С нуля', s: 'под вашу задачу' },
+    ],
   },
   {
     key: 'neon',
@@ -52,6 +67,12 @@ const FLOORS: Floor[] = [
       { x: 50, y: 46, t: 'Интерфейсы', d: 'React, анимации, 3D на странице — и всё это быстро открывается на телефоне.' },
       { x: 20, y: 40, t: 'Плавность', d: 'Анимации без рывков: проверяем на слабых телефонах, а не только на мощном компьютере.' },
       { x: 79, y: 36, t: 'Любой экран', d: 'Компьютер, планшет, телефон и встроенный браузер Telegram.' },
+    ],
+    chips: [
+      { t: 'React', s: 'интерфейсы' },
+      { t: 'Motion', s: 'анимации' },
+      { t: 'Three.js', s: '3D в браузере' },
+      { t: '60 к/с', s: 'без рывков' },
     ],
   },
   {
@@ -65,6 +86,12 @@ const FLOORS: Floor[] = [
       { x: 24, y: 42, t: 'Связь с вами', d: 'Показываем прогресс по ходу работы, а не только в конце.' },
       { x: 86, y: 46, t: 'Тексты и структура', d: 'Помогаем собрать содержание сайта, если его ещё нет.' },
     ],
+    chips: [
+      { t: 'Бриф', s: 'задача на бумаге' },
+      { t: 'Этапы', s: 'сроки заранее' },
+      { t: 'Демо', s: 'прогресс по ходу' },
+      { t: 'Telegram', s: 'связь в один клик' },
+    ],
   },
   {
     key: 'studio',
@@ -76,6 +103,12 @@ const FLOORS: Floor[] = [
       { x: 44, y: 38, t: 'Макеты', d: 'Сначала дизайн ключевых экранов — вы видите сайт до того, как он написан.' },
       { x: 52, y: 76, t: 'Свои фото и 3D', d: 'Снимаем и моделируем товары, если готовых материалов нет.' },
       { x: 79, y: 50, t: 'Фирменный стиль', d: 'Шрифты, цвета и детали, по которым сайт узнают с первого экрана.' },
+    ],
+    chips: [
+      { t: 'Figma', s: 'макеты' },
+      { t: 'Blender', s: '3D-модели' },
+      { t: 'Шрифты', s: 'и цвета' },
+      { t: 'Фото', s: 'товаров и команды' },
     ],
   },
   {
@@ -89,14 +122,20 @@ const FLOORS: Floor[] = [
       { x: 50, y: 32, t: 'Запуск', d: 'Домен, хостинг, HTTPS и скорость загрузки — берём на себя.' },
       { x: 26, y: 62, t: 'После запуска', d: 'Остаёмся рядом: правки, доработки и новые функции.' },
     ],
+    chips: [
+      { t: 'Домен', s: 'и HTTPS' },
+      { t: 'Хостинг', s: 'настроим сами' },
+      { t: 'Скорость', s: 'быстрая загрузка' },
+      { t: 'Поддержка', s: 'после запуска' },
+    ],
   },
 ];
 const N = FLOORS.length;
 const INTRO = 1.4; // подлёт к башне
 const TAIL = 0.6; // задержка на крыше перед следующим разделом
 const TOTAL = INTRO + N + TAIL;
-const SLATS = 9; // пластины жалюзи
 const GAP = 34; // промежуток между этажами, px
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const smooth = (t: number) => t * t * (3 - 2 * t);
@@ -111,21 +150,62 @@ function floorPos(p: number) {
   return i + smooth(clamp((f - 0.5) / 0.5));
 }
 
-// ——— пластина жалюзи: поворачивается вокруг своей оси, открывая комнату ———
-const Slat: React.FC<{ k: number; open: MotionValue<number> }> = ({ k, open }) => {
-  // открываются волной слева направо
-  const t = useTransform(open, (o) => smooth(clamp(o * 1.5 - (k / SLATS) * 0.5)));
-  const rotateY = useTransform(t, (v) => v * 90);
-  const opacity = useTransform(t, (v) => 1 - smooth(v));
+// ——— плашка сбоку этажа: держится у края рамки, выплывает к текущему этажу ———
+// l — слева или справа, y — высота в % кадра, z — насколько впереди этажа, k — сдвиг при движении лифта
+const SLOTS = [
+  { l: true, y: 12, z: 90, k: 60 },
+  { l: false, y: 8, z: 140, k: -45 },
+  { l: true, y: 80, z: 130, k: -70 },
+  { l: false, y: 86, z: 70, k: 50 },
+];
+const SideChip: React.FC<{ c: Chip; n: number; accent: string; d: MotionValue<number> }> = ({ c, n, accent, d }) => {
+  const s = SLOTS[n % SLOTS.length];
+  const y = useTransform(d, (v) => v * s.k); // при движении плашки отстают по-разному — видна глубина
+  return (
+    <motion.div className="pointer-events-none absolute hidden lg:block" style={{ top: `${s.y}%`, [s.l ? 'left' : 'right']: 0, z: s.z, y }}>
+      <div className={s.l ? 'translate-x-[20%] 2xl:-translate-x-[62%]' : '-translate-x-[20%] 2xl:translate-x-[62%]'}>
+        <motion.div
+          initial={{ opacity: 0, x: s.l ? -36 : 36, filter: 'blur(6px)' }}
+          animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, x: s.l ? -20 : 20, filter: 'blur(6px)', transition: { duration: 0.3 } }}
+          transition={{ duration: 0.8, delay: 0.15 + n * 0.1, ease: EASE }}
+        >
+          <div
+            className="flex items-center gap-3 whitespace-nowrap rounded-2xl border border-white/12 bg-[#0a0910]/88 py-2.5 pl-3 pr-5 shadow-[0_20px_44px_-18px_rgba(0,0,0,.95)]"
+            style={{ animation: `tower-float ${5 + n * 0.8}s ease-in-out ${-n * 1.3}s infinite` }}
+          >
+            <span className="h-8 w-[3px] rounded-full" style={{ background: accent, boxShadow: `0 0 12px ${accent}` }} />
+            <span>
+              <span className="block text-[16px] font-semibold leading-tight text-white">{c.t}</span>
+              <span className="block text-[12px] text-haze">{c.s}</span>
+            </span>
+          </div>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
+
+// ——— полоса света: проносится мимо, пока лифт едет между этажами ———
+const STREAKS = Array.from({ length: 22 }, (_, k) => {
+  const r = (n: number) => {
+    const v = Math.sin(k * 12.9898 + n * 78.233) * 43758.5453;
+    return v - Math.floor(v);
+  };
+  // только по бокам, середина — для этажа
+  return { x: k % 2 ? 1 + r(1) * 21 : 78 + r(1) * 21, h: 120 + r(2) * 260, sp: 0.6 + r(3) * 1.2, o: r(4) * 2000 };
+});
+const Streak: React.FC<{ s: (typeof STREAKS)[number]; pos: MotionValue<number>; travel: MotionValue<number> }> = ({ s, pos, travel }) => {
+  // лифт едет вверх — огни уходят вниз
+  const y = useTransform(pos, (v) => {
+    const span = window.innerHeight + 600;
+    return ((v * 900 * s.sp + s.o) % span) - 300;
+  });
+  const opacity = useTransform(travel, (t) => t * 0.75);
   return (
     <motion.div
-      className="h-full flex-1 origin-center"
-      style={{
-        rotateY,
-        opacity,
-        background: 'linear-gradient(90deg, rgba(14,16,28,.92), rgba(40,46,70,.82) 45%, rgba(18,20,34,.92))',
-        boxShadow: 'inset -1px 0 0 rgba(255,255,255,.07), inset 1px 0 0 rgba(0,0,0,.4)',
-      }}
+      className="absolute top-0 w-px"
+      style={{ left: `${s.x}%`, height: s.h, y, opacity, background: 'linear-gradient(to bottom, transparent, rgba(205,220,255,.6), transparent)' }}
     />
   );
 };
@@ -185,8 +265,12 @@ const FloorView: React.FC<{ f: Floor; i: number; pos: MotionValue<number>; intro
   const dim = useTransform(ad, (v) => Math.min(v, 1.4) * 0.5); // затемнение соседних этажей
   const photoY = useTransform(d, (v) => `${clamp(v, -1.5, 1.5) * -8}%`);
   const photoScale = useTransform(ad, (v) => 1.06 + Math.min(v, 1) * 0.06);
-  // жалюзи: на подлёте закрыты у всех, у текущего этажа открываются
+  // стекло: на подлёте тёмное у всех, у текущего этажа светлеет, по нему проходит полоса света
   const open = useTransform([ad, intro] as MotionValue<number>[], ([a, it]: number[]) => clamp(1 - a * 1.6) * it);
+  const glass = useTransform(open, (o) => 1 - smooth(clamp(o * 1.25)));
+  const sweepX = useTransform(open, (o) => `${-100 + o * 400}%`);
+  const sweepO = useTransform(open, (o) => Math.sin(Math.PI * clamp(o)) * 0.9);
+  const sheenX = useTransform(d, (v) => `${clamp(v, -2, 2) * 12}%`); // блик на стекле скользит при движении
   const glow = useTransform(ad, (v) => clamp(1 - v * 1.8));
   const ring = useTransform(glow, (g) => `0 0 0 1px rgba(255,255,255,${0.08 + g * 0.1}), 0 0 ${g * 60}px -10px ${f.accent}, 0 30px 80px -30px rgba(0,0,0,.9)`);
 
@@ -220,15 +304,36 @@ const FloorView: React.FC<{ f: Floor; i: number; pos: MotionValue<number>; intro
         {/* виньетка и затемнение соседних этажей */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_95%_at_50%_45%,transparent_58%,rgba(0,0,0,.6))]" />
         <motion.div className="pointer-events-none absolute inset-0 bg-[#05050a]" style={{ opacity: dim }} />
-        {/* жалюзи */}
-        <div className="pointer-events-none absolute inset-0 flex" style={{ perspective: 900 }}>
-          {Array.from({ length: SLATS }, (_, k) => (
-            <Slat key={k} k={k} open={open} />
-          ))}
-        </div>
+        {/* тонированное стекло: размытая комната, номер этажа и кто на нём */}
+        <motion.div className="pointer-events-none absolute inset-0" style={{ opacity: glass }}>
+          <img src={blurImg(f.photo)} alt="" draggable={false} className="absolute inset-0 h-full w-full scale-110 object-cover saturate-150" />
+          <div className="absolute inset-0 bg-[#06050b]/80" />
+          <div className="absolute inset-0" style={{ background: `radial-gradient(70% 90% at 50% 115%, ${f.accent}2e, transparent 70%)` }} />
+          <motion.div
+            className="absolute inset-y-0 -left-1/2 w-[200%]"
+            style={{ x: sheenX, background: 'linear-gradient(110deg, transparent 40%, rgba(255,255,255,.07) 47%, rgba(255,255,255,.02) 52%, transparent 58%)' }}
+          />
+          <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+            <span className="font-display text-[clamp(72px,11vw,170px)] font-semibold leading-none tracking-[-0.04em] text-transparent" style={{ WebkitTextStroke: `1.5px ${f.accent}b0` }}>
+              {String(i).padStart(2, '0')}
+            </span>
+            <span className="mt-4 font-mono text-[11px] uppercase tracking-[0.35em] text-white/70">{f.title}</span>
+            {f.member && (
+              <span className="mt-2 text-[14px] text-white/45">
+                {f.member.name} · {f.member.role}
+              </span>
+            )}
+          </div>
+        </motion.div>
+        <motion.div
+          className="pointer-events-none absolute inset-y-0 left-0 w-[35%]"
+          style={{ x: sweepX, opacity: sweepO, mixBlendMode: 'screen', background: `linear-gradient(90deg, transparent, ${f.accent}33, rgba(255,255,255,.2), ${f.accent}33, transparent)` }}
+        />
         {/* верхняя кромка — мягкий свет потолка */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px]" style={{ background: `linear-gradient(90deg, transparent, ${f.accent}, transparent)` }} />
       </motion.div>
+      {/* плашки по бокам — только у текущего этажа */}
+      <AnimatePresence>{active && f.chips.map((c, n) => <SideChip key={c.t} c={c} n={n} accent={f.accent} d={d} />)}</AnimatePresence>
     </motion.div>
   );
 };
@@ -311,6 +416,8 @@ const Tower: React.FC = () => {
   const p = useSpring(scrollYProgress, { stiffness: 110, damping: 26, mass: 0.6 });
   const pos = useTransform(p, floorPos);
   const intro = useTransform(p, (v) => smooth(clamp((v * TOTAL) / INTRO)));
+  // 0 — стоим на этаже, 1 — середина пути между этажами
+  const travel = useTransform(pos, (v) => Math.sin(Math.PI * (v - Math.floor(v))));
   const [cur, setCur] = useState(0);
   const [showInfo, setShowInfo] = useState(false);
   useMotionValueEvent(pos, 'change', (v) => setCur(Math.round(v)));
@@ -374,6 +481,12 @@ const Tower: React.FC = () => {
         <motion.img src={img('city')} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ scale: bgScale, y: bgY }} draggable={false} />
         <motion.div className="absolute inset-0 bg-[#05050a]" style={{ opacity: shade }} />
         <div className="absolute inset-0 bg-[radial-gradient(80%_70%_at_50%_50%,transparent,rgba(5,5,10,.85))]" />
+        {/* огни за стеклом лифта — видны только в движении */}
+        <div className="pointer-events-none absolute inset-0">
+          {STREAKS.map((s, k) => (
+            <Streak key={k} s={s} pos={pos} travel={travel} />
+          ))}
+        </div>
         {/* мягкие переходы сверху и снизу — раздел «вырастает» из страницы */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-28 bg-gradient-to-b from-[#07060c] to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-28 bg-gradient-to-t from-[#07060c] to-transparent" />

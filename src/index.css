@@ -140,6 +140,9 @@ html.lenis body {
 .chibi-cheer .chibi-shadow { animation: chibi-shadow 0.55s cubic-bezier(.3,0,.4,1) infinite; }
 @keyframes chibi-shadow { 0%, 100% { transform: scale(1); } 45% { transform: scale(.7); opacity: .6; } }
 
+/* ——— «Башня»: плашки по бокам этажа плавно покачиваются ——— */
+@keyframes tower-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
 /* ——— «Защита»: эффекты атаки на демо-сайт ——— */
 .sec-corrupt {
   animation: sec-shake 0.18s steps(2) infinite;
